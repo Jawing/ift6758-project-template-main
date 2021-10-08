@@ -45,7 +45,7 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
     #while the game can be found in the api and gameNumber less than or equal to 1271
     while gameNumber <= 1271 and rstatus<400:
         gameID = str(targetyear) + REGULAR_SEASON + format(gameNumber, '04d')
-        filename=f'{filepath}{targetyear}/{gameID}.json'
+        filename=f'{filepath}/{targetyear}/{gameID}.json'
         #checks if dataset in targetyear exist at filepath
         if os.path.isfile(filename):
             #if exist load all data for targetyear and return as pandas Dataframe
@@ -114,7 +114,7 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
             #loop through games up to 7
             while playoffgame <= 7 and rstatus<400:
                 gameID = str(targetyear) + PLAYOFFS + '0' + str(playoffround) + str(matchup) + str(playoffgame)
-                filename=f'{filepath}{targetyear}/{gameID}.json'
+                filename=f'{filepath}/{targetyear}/{gameID}.json'
                 #checks if dataset in targetyear exist at filepath
                 if os.path.isfile(filename):
                     #if exist load all data for targetyear and return as pandas Dataframe
@@ -153,3 +153,17 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
     return pd.DataFrame.from_dict(data)
 
 
+def getNHLData():
+    """
+        function to convert all events of every game into a pandas dataframe.
+        Use your tool to download data from the 2016-17 season all the way up to the 2020-21 season. 
+
+    """
+    # get all games for the requsted period by calling above funciion
+    # keep adding to a pandas data frame
+    # Columns = [ game time/period information, game ID, team information (which team took the shot), indicator if its a shot or a goal, the on-ice coordinates, the shooter and goalie name (don’t worry about assists for now), shot type, if it was on an empty net, and whether or not a goal was at even strength, shorthanded, or on the power play ]
+    for season in list(range(2016, 2021)):
+        print("Loading data for {season}", season)
+        loadstats(season, './data')
+
+        

@@ -168,6 +168,7 @@ def processGameData(gameJSON):
  
         playDF = pd.json_normalize(data["liveData"]["plays"]["allPlays"])
         shotsAndGoalsDF = playDF[playDF["result.event"].isin(["Shot","Goal"])]
+        # TODO: reset index
         # TODO: add game id column
         return shotsAndGoalsDF
 
@@ -193,6 +194,8 @@ def getNHLData( listOfSeasons ):
             gameJSON = os.path.join( "./data", folder, game )
             print("Processing game data ", gameJSON)
             gameDF = processGameData(gameJSON)
+            # TODO: add shooter and goalie columns 
+            # TODO: drop unnecessary columns 
             NHLDataDF = NHLDataDF.append(gameDF)
 
     return NHLDataDF

@@ -153,7 +153,27 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
     return pd.DataFrame.from_dict(data)
 
 
-def getNHLData():
+def processGameData(gameJSON):
+    """
+    """
+    with open( gameJSON ) as gameJson:
+        data = json.load(gameJson)
+        print([key for key in data])
+        print(data["gameData"]["game"]["pk"])
+        print(data["gameData"]["game"]["season"])
+        print(data["gameData"]["game"]["type"])
+        print(data["gameData"]["datetime"]["dateTime"])
+        print(data["gameData"]["datetime"]["endDateTime"])
+        print(type(data["liveData"]["plays"]["allPlays"]))
+ 
+        playDF = pd.json_normalize(data["liveData"]["plays"]["allPlays"])
+        shotsAndGoalsDF = playDF[playDF["result.event"].isin(["Shot","Goal"])]
+        # TODO: add game id column
+        return shotsAndGoalsDF
+
+
+    
+def getNHLData( listOfSeasons ):
     """
         function to convert all events of every game into a pandas dataframe.
         Use your tool to download data from the 2016-17 season all the way up to the 2020-21 season. 
@@ -162,8 +182,17 @@ def getNHLData():
     # get all games for the requsted period by calling above funciion
     # keep adding to a pandas data frame
     # Columns = [ game time/period information, game ID, team information (which team took the shot), indicator if its a shot or a goal, the on-ice coordinates, the shooter and goalie name (don’t worry about assists for now), shot type, if it was on an empty net, and whether or not a goal was at even strength, shorthanded, or on the power play ]
-    for season in list(range(2016, 2021)):
+    for season in listOfSeasons:
         print("Loading data for {season}", season)
         loadstats(season, './data')
 
-        
+    NHLDataDF = pd.Dataframe()
+    
+    for season in listOfSeasons:
+        for game in os.listdir( os.path.join("./data", season)):
+            gameJSON = os.path.join( "./data", folder, game )
+            print("Processing game data ", gameJSON)
+            gameDF = processGameData(gameJSON)
+            NHLDataDF = NHLDataDF.append(gameDF)
+
+    return NHLDataDF

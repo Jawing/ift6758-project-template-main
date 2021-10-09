@@ -187,7 +187,7 @@ def getNHLData( listOfSeasons ):
         print("Loading data for {season}", season)
         loadstats(season, './data')
 
-    NHLDataDF = pd.Dataframe()
+    NHLDataDF = pd.DataFrame()
     
     for season in listOfSeasons:
         for game in os.listdir( os.path.join("./data", season)):

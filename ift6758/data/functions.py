@@ -153,24 +153,37 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
     return pd.DataFrame.from_dict(data)
 
 
+
 def processGameData(gameJSON):
     """
     """
     with open( gameJSON ) as gameJson:
-        data = json.load(gameJson)
-        print([key for key in data])
-        print(data["gameData"]["game"]["pk"])
-        print(data["gameData"]["game"]["season"])
-        print(data["gameData"]["game"]["type"])
-        print(data["gameData"]["datetime"]["dateTime"])
-        print(data["gameData"]["datetime"]["endDateTime"])
-        print(type(data["liveData"]["plays"]["allPlays"]))
- 
-        playDF = pd.json_normalize(data["liveData"]["plays"]["allPlays"])
-        shotsAndGoalsDF = playDF[playDF["result.event"].isin(["Shot","Goal"])]
-        # TODO: reset index
-        # TODO: add game id column
-        return shotsAndGoalsDF
+        try:
+            data = json.load(gameJson)
+            #print([key for key in data])
+            gameID = data["gameData"]["game"]["pk"]
+            gameSeason = data["gameData"]["game"]["season"]
+            #print(data["gameData"]["game"]["pk"])
+            #print(data["gameData"]["game"]["season"])
+            #print(data["gameData"]["game"]["type"])
+            #print(data["gameData"]["datetime"]["dateTime"])
+            #print(data["gameData"]["datetime"]["endDateTime"])
+            #print(type(data["liveData"]["plays"]["allPlays"]))
+        
+            playDF = pd.json_normalize(data["liveData"]["plays"]["allPlays"])
+            #print(playDF.columns)
+            shotsAndGoalsDF = playDF[playDF["result.event"].isin(["Shot","Goal"])]
+            
+            # TODO: reset index
+            # TODO: add game id column
+            # TODO: add shooter and goalie columns 
+            # TODO: drop unnecessary columns 
+        except Exception as inst:
+            print(inst)
+            
+        else:
+            return shotsAndGoalsDF
+        
 
 
     
@@ -190,12 +203,20 @@ def getNHLData( listOfSeasons ):
     NHLDataDF = pd.DataFrame()
     
     for season in listOfSeasons:
-        for game in os.listdir( os.path.join("./data", season)):
-            gameJSON = os.path.join( "./data", folder, game )
+        for game in os.listdir( os.path.join("./data", str(season))):
+            gameJSON = os.path.join( "./data", str(season), game )
             print("Processing game data ", gameJSON)
-            gameDF = processGameData(gameJSON)
-            # TODO: add shooter and goalie columns 
-            # TODO: drop unnecessary columns 
-            NHLDataDF = NHLDataDF.append(gameDF)
+            try:
+                gameDF = processGameData(gameJSON)
+                
+            except Exception as inst:
+                print(inst) 
+                
+            else:
+                print(type(gameDF))
+                NHLDataDF = NHLDataDF.append(gameDF)
+                print(NHLDataDF.shape)
+              
 
     return NHLDataDF
+

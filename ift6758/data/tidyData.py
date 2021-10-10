@@ -99,10 +99,10 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
             emptyNet.append(True)
             goalie.append("EmptyNet") # When there is no goalie, return "EmptyNet", or maybe pd.NA?
             goalie_count += 1
-            print("emptyNet = True")
-            print(" i ", i)
-            print(" game_id", game_id[i])
-            print(df['about'][i]['eventIdx'], "event idx \n")
+            # print("emptyNet = True")
+            # print(" i ", i)
+            # print(" game_id", game_id[i])
+            # print(df['about'][i]['eventIdx'], "event idx \n")
         else:
             emptyNet.append(False)
 

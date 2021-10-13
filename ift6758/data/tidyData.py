@@ -28,6 +28,7 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
         if it was on an empty net - emptyNet
         and whether or not a goal was at even strength,
         shorthanded, or on the power play."
+        homeTeam,awayTeam names
 
     Examples
     --------
@@ -35,7 +36,7 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
     df = tidyData(dfs)
     """
     rows_list, event_idx, game_id, period, periodTime, teamInfo, isGoal, shotType, \
-    coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength = ([] for i in range(14))
+    coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength,homeTeam,awayTeam = ([] for i in range(16))
 
     for j in range(dfs.shape[1]): # dfs.shape[1]
         allPlays = dfs.iloc[:, j]["liveData"]["plays"]["allPlays"]
@@ -45,17 +46,23 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
                 rows_list.append(event)
                 game_id.append(dfs.iloc[:, j].name)
                 strength.append('NA')
+                awayTeam.append(dfs.iloc[:, j]['gameData']['teams']['away']['name'])
+                homeTeam.append(dfs.iloc[:, j]['gameData']['teams']['home']['name'])
             if event['result']['eventTypeId'] == "GOAL":
                 rows_list.append(event)
                 game_id.append(dfs.iloc[:, j].name)
                 strength.append(event['result']['strength']['code'])
+                awayTeam.append(dfs.iloc[:, j]['gameData']['teams']['away']['name'])
+                homeTeam.append(dfs.iloc[:, j]['gameData']['teams']['home']['name'])
+
+
             # count += 1
 
-    toCheck = [rows_list, strength, game_id]
+    toCheck = [rows_list, strength, game_id,awayTeam, homeTeam]
 
     if len({len(i) for i in toCheck}) == 1:
         df = pd.DataFrame(rows_list)
-
+    #print(df)
     for i in range(df.shape[0]):
 
         event_idx.append(df['about'][i]['eventIdx'])
@@ -106,15 +113,14 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
         else:
             emptyNet.append(False)
 
-        if shooter_count != goalie_count:
-            print("shooter_count not equal to goalie_count")
-            print("i ", i)
-            print("game_id", game_id[i])
-            print(df['about'][i]['eventIdx'], "event idx \n")
-            if not ('emptyNet' in df['result'][i] and df['result'][i]['emptyNet'] == True):
-                print("score, not emptyNet, but no goalie! Add goalie as pd.NA")
-                goalie.append(pd.NA)
-                goalie_count += 1
+        if not ('emptyNet' in df['result'][i] and df['result'][i]['emptyNet'] == True) and (shooter_count > 0 and goalie_count == 0):
+            # print("shooter_count not equal to goalie_count")
+            # print("i ", i)
+            # print("game_id", game_id[i])
+            # print(df['about'][i]['eventIdx'], "event idx \n")
+            # print("score, not emptyNet, but no goalie! Add goalie as pd.NA")
+            goalie.append(pd.NA)
+            goalie_count += 1
 
         if shooter_count != goalie_count:
             raise ValueError("shooter_count not equal to goalie_count")
@@ -132,14 +138,14 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
         #     for lst in toCheck:
         #         print(lst, "\n")
         #     raise ValueError('not all lists have same length!')
-    for lst in [event_idx, period, periodTime, teamInfo, isGoal,
-                shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength]:
-        print(len(lst))
+
+    #shorthand check if all lens are equal
+    assert(all(len(lst) == len(event_idx) for lst in [event_idx, period, periodTime, teamInfo, isGoal,
+               shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength, awayTeam, homeTeam]) )
 
     df2 = pd.DataFrame(np.column_stack([game_id, event_idx, period, periodTime, teamInfo, isGoal,
-                                        shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength]),
+                                        shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength, awayTeam, homeTeam]),
                        columns=['game_id', 'event_idx', 'period', 'periodTime', 'teamInfo', 'isGoal',
-                                'shotType', 'coordinates_x', 'coordinates_y', 'shooter', 'goalie', 'emptyNet',
-                                'strength'])
+                                'shotType', 'coordinates_x', 'coordinates_y', 'shooter', 'goalie', 'emptyNet','strength', 'awayTeam', 'homeTeam'])
 
     return df2

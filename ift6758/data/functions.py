@@ -30,7 +30,7 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
 
     Examples
     --------
-    >>> loadstats(2016,'./data/')
+    >>> loadstats(2016,'./data')
     pd.DataFrame
     """
 
@@ -49,7 +49,7 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
     #while the game can be found in the api and gameNumber less than or equal to 1271
     while gameNumber <= 1271 and rstatus<400:
         gameID = str(targetyear) + REGULAR_SEASON + format(gameNumber, '04d')
-        filename=f'{filepath}{targetyear}/{gameID}.json'
+        filename=f'{filepath}/{targetyear}/{gameID}.json'
         #checks if dataset in targetyear exist at filepath
         if os.path.isfile(filename):
             #if exist load all data for targetyear and return as pandas Dataframe
@@ -118,7 +118,7 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
             #loop through games up to 7
             while playoffgame <= 7 and rstatus<400:
                 gameID = str(targetyear) + PLAYOFFS + '0' + str(playoffround) + str(matchup) + str(playoffgame)
-                filename=f'{filepath}{targetyear}/{gameID}.json'
+                filename=f'{filepath}/{targetyear}/{gameID}.json'
                 #checks if dataset in targetyear exist at filepath
                 if os.path.isfile(filename):
                     #if exist load all data for targetyear and return as pandas Dataframe
@@ -191,7 +191,7 @@ def load_genGrid(year=2020, sType='Both'):
     
     
     #load data
-    dfs = loadstats(year,'./data/')
+    dfs = loadstats(year,'./data')
     #tidydata
     dfs_tidy = tidyData(dfs)
 
@@ -303,11 +303,11 @@ def fixCoOrdinates( event : pd.Series ) -> pd.Series :
 
     Example
     --------
-rotatedCoOrd_DF = NHLData.apply(fixCoOrdinates, axis=1, result_type="expand")
+    >>> rotatedCoOrd_DF = NHLData.apply(fixCoOrdinates, axis=1, result_type="expand")
     >>> NHLData.drop( rotatedCoOrd_DF.columns )
     >>> NHLData = NHLData.join( rotatedCoOrd_DF )
 
-
+    
     """
     x, y = event.coordinates_x, event.coordinates_y
     # don't need to change the coordinates for home team on period 1,3,5..etc 
@@ -317,8 +317,121 @@ rotatedCoOrd_DF = NHLData.apply(fixCoOrdinates, axis=1, result_type="expand")
         if( str(event.teamInfo) == str(event.homeTeam) ):
             x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
 
+            
     else: 
         if( str(event.teamInfo) == str(event.awayTeam) ):
             x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
 
     return pd.Series( [x, y], index=["coordinates_x", "coordinates_y"] )
+
+
+def processShootersAndGoalies(playerJson):
+    """
+    """
+    # normalize json
+    x = pd.json_normalize(playerJson )
+    
+    # rename scorer to shooter
+    x = x.applymap(lambda x : "Shooter" if x == "Scorer" else x )
+    
+    # drop 'assists'
+    x.drop_duplicates(subset="playerType", keep=False, inplace=True)
+    
+    # reset index to player type
+    y = x.set_index("playerType")
+    
+    # return series fullname
+    return y["player.fullName"]
+    
+    
+def getShootersAndGoalies(  playerJson ):
+    """
+    """
+    shootersAndGoalies = playerJson.apply( processShootersAndGoalies )
+    return shootersAndGoalies.iloc[0]
+    
+def processGameData(gameJSON):
+    """
+    """
+    with open( gameJSON ) as gameJson:
+        try:
+            # try loading the json
+            data = json.load(gameJson)
+            
+            # get gameid and season
+            gameID = data["gameData"]["game"]["pk"]
+            gameSeason = data["gameData"]["game"]["season"]
+            
+            #print(data["gameData"]["game"]["pk"])
+            #print(data["gameData"]["game"]["season"])
+            #print(data["gameData"]["game"]["type"])
+            #print(data["gameData"]["datetime"]["dateTime"])
+            #print(data["gameData"]["datetime"]["endDateTime"])
+            #print(type(data["liveData"]["plays"]["allPlays"]))
+            
+            # Get all plays data
+            #playDF = pd.json_normalize( data = data["liveData"]["plays"]["allPlays"] )
+            playDF = pd.json_normalize( data = data, record_path = ["liveData", "plays", "allPlays"], meta = [ "gamePk" ] )
+            #playDF = pd.json_normalize( data , record_path = "allPlays" )
+            
+            # Filter out goals and shots into a dataframe
+            shotsAndGoalsDF = playDF[playDF["result.event"].isin(["Shot","Goal"])]
+            
+            # extract players data as a dataframe
+            playersDF = pd.DataFrame(shotsAndGoalsDF["players"])
+            
+            # Get a data frame with Shooters and Goalie columns
+            #  - traverse each row of playersDF, and get a DF with two new columns
+            shooterAndGolieDF = playersDF.apply( getShootersAndGoalies, axis = 1, result_type="expand" )
+            #gameIdAndSeasonDF = playersDF.apply( lambda x: pd.Series([, 2], index=['foo', 'bar']), axis=1)
+            
+            # Update 'shots and goals' dataframe with 'shooters and goalies'
+            shotsAndGoalsDF = shotsAndGoalsDF.join(shooterAndGolieDF)
+            print(shotsAndGoalsDF.columns)
+        
+            # TODO: drop unnecessary columns 
+            # TODO: rename Columns
+            # TODO: reset index
+            
+        except Exception as inst:
+            print(inst)
+            
+        else:
+            return shotsAndGoalsDF
+        
+        
+def getNHLData( listOfSeasons ):
+    """
+        function to convert all events of every game into a pandas dataframe.
+        Use your tool to download data from the 2016-17 season all the way up to the 2020-21 season. 
+
+    """
+    # get all games for the requsted period by calling above funciion
+    # keep adding to a pandas data frame
+    # Columns = [ game time/period information, game ID, team information (which team took the shot), 
+    #             indicator if its a shot or a goal, the on-ice coordinates, the shooter and goalie name (don’t worry about assists for now), 
+    #             shot type, if it was on an empty net, and whether or not a goal was at even strength, shorthanded, or on the power play ]
+    
+    for season in listOfSeasons:
+        #print("Loading data for {season}", season)
+        loadstats(season, './data')
+
+    NHLDataDF = pd.DataFrame()
+    
+    for season in listOfSeasons:
+        for game in os.listdir( os.path.join("./data", str(season))):
+            gameJSON = os.path.join( "./data", str(season), game )
+            #print("Processing game data ", gameJSON)
+            try:
+                gameDF = processGameData(gameJSON)
+                
+            except Exception as inst:
+                print(inst) 
+                
+            else:
+                #print(type(gameDF))
+                NHLDataDF = NHLDataDF.append(gameDF)
+                #print(NHLDataDF.shape)
+              
+
+    return NHLDataDF

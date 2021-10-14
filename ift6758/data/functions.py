@@ -2,6 +2,10 @@ import os.path
 import requests
 import json
 import pandas as pd
+import numpy as np
+from ift6758.data.tidyData import tidyData
+from scipy.ndimage import gaussian_filter
+
 
 #function for data acquisition
 def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
@@ -26,7 +30,7 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
 
     Examples
     --------
-    >>> loadstats(2016,'./data/')
+    >>> loadstats(2016,'./data')
     pd.DataFrame
     """
 
@@ -153,10 +157,138 @@ def loadstats(targetyear: int, filepath: str) -> pd.DataFrame:
     return pd.DataFrame.from_dict(data)
 
 
+#pre-load all years may crash if low on memory
+def load_genGridi(n=5):
+    binned_gridi = {}
+    dfs_tidyi = {}
+    Teamnamesi = {}
+    for year in list(range(2016,2016+n)):
+        binned_gridi[str(year)],dfs_tidyi[str(year)],Teamnamesi[str(year)] = load_genGrid(year, 'Both')
+        
+    return binned_gridi,dfs_tidyi,Teamnamesi
+
+
+#generate and load gridtotals for year
+def load_genGrid(year=2020, sType='Both'):
+    """
+    generate agregated hockey data grid for plotly graph object
+
+    Parameters
+    ----------
+    year:int 
+        year of the hockey game, default=2020
+    sType:str->'Both','Regular','PlayOffs'
+        selection for which part of the season to agregate, default='Both'
+    Returns
+    -------
+    avg_binned_grid: A team specificed normalized and smoothed binned league average comparison for shots taken on the 2D hockey map.
+    dfs_tidy:A tidied dataframe for year/type specifcied
+    Teamnames: all teamnames from year
+    Examples
+    --------
+    avg_binned_grid,dfs_tidy,Teamnames = load_genGrid(year=2020, type='Both')
+    """
+    
+    
+    #load data
+    dfs = loadstats(year,'./data')
+    #tidydata
+    dfs_tidy = tidyData(dfs)
+
+    
+    #select between regular and playoff season
+    firstplayoff = str(year) + "03" + format(0, '04d')
+    if sType == 'Both':
+        pass
+    elif sType == 'PlayOffs':
+        dfs_tidy = dfs_tidy[dfs_tidy.game_id >= firstplayoff]
+    elif sType == 'Regular':
+        dfs_tidy = dfs_tidy[dfs_tidy.game_id < firstplayoff]
+    else:
+        raise Exception('type mismatch')
+    
+    #convert to small image bin coordinates
+    dfs_tidy = dfs_tidy[dfs_tidy['coordinates_x'].notna()]#exclude na coordinates
+    dfs_tidy = dfs_tidy[dfs_tidy['coordinates_y'].notna()]#exclude na coordinates
+    
+    #fix and rotate coordinates to relative sides
+    dfs_tidy_new = dfs_tidy.apply(fixCoOrdinates, axis=1, result_type="expand")
+    dfs_tidy.drop( dfs_tidy_new.columns, axis='columns', inplace=True )
+    dfs_tidy = dfs_tidy.join(dfs_tidy_new)
+    
+
+
+    Teamnames = dfs_tidy.awayTeam.unique()
+    Teamnames = np.unique(np.append(Teamnames,dfs_tidy.homeTeam.unique()))
+
+    
+    #binning totals
+    #binned_grid = np.zeros((85,200))
+    binned_grid = np.zeros((100,85))
+    #print(avg_binned_grid.shape)
+    for i, p in dfs_tidy.iterrows():
+        #print(i)
+        #print(p.coordinates_y)
+        #print(p.coordinates_x)
+        binned_grid[int(p.coordinates_y),int(p.coordinates_x)]+=1
+
+    return binned_grid,dfs_tidy,Teamnames
+    
+    
+
+    
+def genTeamGrid(binned_grid,dfs_tidy:pd.DataFrame,Teamnames,selected_team='Toronto Maple Leafs'):
+            
+    #generate teamGrid
+    
+    #check if teamname exist
+    if not (selected_team in Teamnames):
+        raise Exception('team name mismatch')
+    
+
+    #binning totals for one team
+    #team_binned_grid = np.zeros((85,200))
+    team_binned_grid = np.zeros((100,85))
+    #print(team_binned_grid.shape)
+    for i, p in dfs_tidy[dfs_tidy.teamInfo == selected_team].iterrows():
+        #print(i)
+        #print(p.coordinates_y)
+        #print(p.coordinates_x)
+        team_binned_grid[int(p.coordinates_y),int(p.coordinates_x)]+=1
+
+    #average agregated shots across the season and smooth with gaussian filter
+   
+    team_binned_grid = team_binned_grid- (binned_grid / len(Teamnames))
+    team_binned_grid = gaussian_filter(team_binned_grid, sigma=2)
+    
+    return team_binned_grid
+
+
+
+def setContour(team_binned_grid,contourN = 12):
+
+    #find and set contour layout
+    
+    maxG = np.max(team_binned_grid)
+    minG = np.min(team_binned_grid)
+
+    if abs(maxG) > abs(minG):
+        midC = 1/((abs(maxG)/abs(minG))+1)
+    else:
+        midC = 1-(1/((abs(minG)/abs(maxG))+1))
+    
+    colorscale = [[0, 'blue'],[max(0,midC-0.02), 'white'], [min(1,midC+0.02), 'white'],[1, 'red']]
+    #colorscale = [[0.1, 'rgb(255, 255, 255)'], [0, 'rgb(46, 255, 213)'], [1, 'rgb(255, 28, 251)']]
+
+    #returns colorscale and min/max grid values
+    return colorscale,minG,maxG
+
+
+
 def fixCoOrdinates( event : pd.Series ) -> pd.Series :
     """
     Apply this method to NHL Data dataframe to rotate cordinate fields by 180
-    
+
     Parameters
     ----------
     event : pd.Series
@@ -179,16 +311,21 @@ def fixCoOrdinates( event : pd.Series ) -> pd.Series :
     x, y = event.coordinates_x, event.coordinates_y
     # don't need to change the coordinates for home team on period 1,3,5..etc 
     # just change the coordinate for away side and rotate by 180 for periods 1,3,5 (and not 2,4,6...etc) and home team on 2,4,6..etc. 
-    if( int( event.period ) % 2 == 0):
-        #even peiod 2,4,6
-        if( str(event.teamInfo) == str(event.homeTeam) ):
-            x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
-            
-    else: 
-        if( str(event.teamInfo) == str(event.awayTeam) ):
-            x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
+    if x > 0:
+        x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
 
-    return pd.Series( [x, y], index=["coordinates_x", "coordinates_y"] )
+    #recenter
+    x += 50    
+
+    #rotate 90 degrees clockwise
+    rx = y
+    ry = -x
+
+    #recalibrate to image coordinate axis
+    rx += 42.5
+    ry += 50
+
+    return pd.Series( [rx, ry], index=["coordinates_x", "coordinates_y"] )
 
 
 def processShootersAndGoalies(playerJson):

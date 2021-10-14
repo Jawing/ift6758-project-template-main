@@ -259,7 +259,7 @@ def genTeamGrid(binned_grid,dfs_tidy:pd.DataFrame,Teamnames,selected_team='Toron
     #average agregated shots across the season and smooth with gaussian filter
    
     team_binned_grid = team_binned_grid- (binned_grid / len(Teamnames))
-    team_binned_grid = gaussian_filter(team_binned_grid, sigma=3)
+    team_binned_grid = gaussian_filter(team_binned_grid, sigma=2)
     
     return team_binned_grid
 

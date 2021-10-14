@@ -216,9 +216,6 @@ def load_genGrid(year=2020, sType='Both'):
     dfs_tidy.drop( dfs_tidy_new.columns, axis='columns', inplace=True )
     dfs_tidy = dfs_tidy.join(dfs_tidy_new)
     
-    #convert to small image bin coordinates
-    dfs_tidy["coordinates_x"]= dfs_tidy.coordinates_x.apply(lambda x : int(x +100))
-    dfs_tidy["coordinates_y"]= dfs_tidy.coordinates_y.apply(lambda y : int(y +42.5))
 
 
     Teamnames = dfs_tidy.awayTeam.unique()
@@ -226,7 +223,8 @@ def load_genGrid(year=2020, sType='Both'):
 
     
     #binning totals
-    binned_grid = np.zeros((85,200))
+    #binned_grid = np.zeros((85,200))
+    binned_grid = np.zeros((100,85))
     #print(avg_binned_grid.shape)
     for i, p in dfs_tidy.iterrows():
         #print(i)
@@ -249,7 +247,8 @@ def genTeamGrid(binned_grid,dfs_tidy:pd.DataFrame,Teamnames,selected_team='Toron
     
 
     #binning totals for one team
-    team_binned_grid = np.zeros((85,200))
+    #team_binned_grid = np.zeros((85,200))
+    team_binned_grid = np.zeros((100,85))
     #print(team_binned_grid.shape)
     for i, p in dfs_tidy[dfs_tidy.teamInfo == selected_team].iterrows():
         #print(i)
@@ -260,7 +259,7 @@ def genTeamGrid(binned_grid,dfs_tidy:pd.DataFrame,Teamnames,selected_team='Toron
     #average agregated shots across the season and smooth with gaussian filter
    
     team_binned_grid = team_binned_grid- (binned_grid / len(Teamnames))
-    team_binned_grid = gaussian_filter(team_binned_grid, sigma=2)
+    team_binned_grid = gaussian_filter(team_binned_grid, sigma=3)
     
     return team_binned_grid
 
@@ -312,17 +311,21 @@ def fixCoOrdinates( event : pd.Series ) -> pd.Series :
     x, y = event.coordinates_x, event.coordinates_y
     # don't need to change the coordinates for home team on period 1,3,5..etc 
     # just change the coordinate for away side and rotate by 180 for periods 1,3,5 (and not 2,4,6...etc) and home team on 2,4,6..etc. 
-    if( int( event.period ) % 2 == 0):
-        #even peiod 2,4,6
-        if( str(event.teamInfo) == str(event.homeTeam) ):
-            x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
+    if x > 0:
+        x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
 
-            
-    else: 
-        if( str(event.teamInfo) == str(event.awayTeam) ):
-            x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
+    #recenter
+    x += 50    
 
-    return pd.Series( [x, y], index=["coordinates_x", "coordinates_y"] )
+    #rotate 90 degrees clockwise
+    rx = y
+    ry = -x
+
+    #recalibrate to image coordinate axis
+    rx += 42.5
+    ry += 50
+
+    return pd.Series( [rx, ry], index=["coordinates_x", "coordinates_y"] )
 
 
 def processShootersAndGoalies(playerJson):

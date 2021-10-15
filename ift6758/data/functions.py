@@ -3,6 +3,8 @@ import requests
 import json
 import pandas as pd
 import numpy as np
+import os
+
 from ift6758.data.tidyData import tidyData
 from scipy.ndimage import gaussian_filter
 
@@ -328,23 +330,21 @@ def fixCoOrdinates( event : pd.Series ) -> pd.Series :
     return pd.Series( [rx, ry], index=["coordinates_x", "coordinates_y"] )
 
 
+
 def processShootersAndGoalies(playerJson):
     """
     """
     # normalize json
     x = pd.json_normalize(playerJson )
-    
     # rename scorer to shooter
     x = x.applymap(lambda x : "Shooter" if x == "Scorer" else x )
-    
     # drop 'assists'
     x.drop_duplicates(subset="playerType", keep=False, inplace=True)
-    
     # reset index to player type
     y = x.set_index("playerType")
-    
     # return series fullname
     return y["player.fullName"]
+    
     
     
 def getShootersAndGoalies(  playerJson ):
@@ -390,17 +390,64 @@ def processGameData(gameJSON):
             
             # Update 'shots and goals' dataframe with 'shooters and goalies'
             shotsAndGoalsDF = shotsAndGoalsDF.join(shooterAndGolieDF)
-            print(shotsAndGoalsDF.columns)
-        
-            # TODO: drop unnecessary columns 
+            
+            periodsDF = pd.json_normalize( data = data, record_path = ["liveData", "linescore", "periods"]  )
+
+            teamsDF = pd.json_normalize( data = data["gameData"]["teams"] )
+            teamNames = teamsDF.loc[0, ["home.name", "away.name"]]
+
+            teamNamesDF =  periodsDF.apply( lambda x : teamNames, axis='columns', result_type="expand" )
+            
+            # columnsToDrop = periodsDF.columns - columnsToKeep
+            
+            drop = ['periodType', 'startTime', 'endTime', 'ordinalNum', 'home.goals', 'home.shotsOnGoal', \
+                    'away.goals', 'away.shotsOnGoal' ]
+            #print(drop)
+            keep = ['num', 'home.rinkSide', 'away.rinkSide', 'home.name', 'away.name']
+            #print( "dddd -> ", periodsDF.columns - drop )
+            drop = [column for column in periodsDF.columns.array if column not in keep ]
+            #print(drop)
+            periodsDF = periodsDF.join( teamNamesDF ).drop( drop, axis=1)
+            #print(type(periodsDF.columns))
+            #print(type(periodsDF.columns.array))
+            # columnsToDrop = shotsAndGoalsDF2.columns - ColumnsToKeep
+            drop = ['result.event', 'result.eventCode', 'result.description', \
+             'about.eventIdx', 'about.eventId', 'about.periodType', \
+             'about.ordinalNum', 'about.periodTime', 'about.periodTimeRemaining', \
+             'about.goals.away', 'about.goals.home', 'players', 'team.id', \
+             'team.link', 'team.triCode', 'result.penaltySeverity', 'result.penaltyMinutes', \
+             'result.strength.code', 'result.gameWinningGoal' ]
+            #print(drop)
+            keep = ['result.eventTypeId', 'about.period', 'about.dateTime', 'coordinates.x', 'coordinates.y', \
+                    'team.name', 'result.secondaryType', 'result.strength.name', 'result.emptyNet', 'gamePk', \
+                    'Goalie', 'Shooter']
+            drop = [ column for column in shotsAndGoalsDF.columns.array if column not in keep ]
+            #print(drop)
+
+            shotsAndGoalsDF2 = shotsAndGoalsDF.drop( drop,  axis=1).reset_index() 
+
+            shotsAndGoalsPeriodsDF = pd.DataFrame( shotsAndGoalsDF2['about.period'] )
+            shotsAndGoalsPeriodsDF2 = shotsAndGoalsPeriodsDF.merge(periodsDF,  left_on='about.period', right_on='num')
+
+            shotsAndGoalsDF3 = shotsAndGoalsDF2.join(shotsAndGoalsPeriodsDF2, lsuffix='_left', rsuffix='_right')
+            # columnsToDrop = shotsAndGoalsDF3.columns - ColumnsToKeep
+            drop = ['index', 'about.period_right', 'num', 'Assist']
+            #print(drop)
+            keep = ['result.eventTypeId', 'about.period_left', 'about.dateTime', 'coordinates.x', \
+                    'coordinates.y', 'team.name', 'result.secondaryType', 'result.strength.name', \
+                    'result.emptyNet', 'gamePk', 'Shooter', 'Goalie', 'home.rinkSide', \
+                    'away.rinkSide', 'home.name', 'away.name']
+                    
+            drop = [column for column in shotsAndGoalsDF3.columns.array if column not in keep ]
+            #print(drop)
+            shotsAndGoalsDF4 = shotsAndGoalsDF3.drop( drop, axis=1 )
             # TODO: rename Columns
-            # TODO: reset index
             
         except Exception as inst:
-            print(inst)
+            print("An excetion occured :: ", inst)
             
         else:
-            return shotsAndGoalsDF
+            return shotsAndGoalsDF4
         
         
 def getNHLData( listOfSeasons ):

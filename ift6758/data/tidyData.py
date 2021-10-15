@@ -36,24 +36,60 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
     df = tidyData(dfs)
     """
     rows_list, event_idx, game_id, period, periodTime, teamInfo, isGoal, shotType, \
-    coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength,homeTeam,awayTeam = ([] for i in range(16))
+    coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength, \
+    homeTeam, homeRinkSide, awayTeam, awayRinkSide = ([] for i in range(18))
 
     for j in range(dfs.shape[1]): # dfs.shape[1]
         allPlays = dfs.iloc[:, j]["liveData"]["plays"]["allPlays"]
         for event in allPlays:
-            # search for events that are 'shot' or 'goal'
+            # search for events that are 'shot'
             if event['result']['eventTypeId'] == "SHOT":
                 rows_list.append(event)
                 game_id.append(dfs.iloc[:, j].name)
                 strength.append('NA')
                 awayTeam.append(dfs.iloc[:, j]['gameData']['teams']['away']['name'])
                 homeTeam.append(dfs.iloc[:, j]['gameData']['teams']['home']['name'])
+                period_Num = int(event['about']['period']) - 1 
+                #print(period_Num)
+                #print(len(dfs.iloc[:, j]['liveData']['linescore']['periods']))
+                homePeriod = dfs.iloc[:, j]['liveData']['linescore']['periods'][period_Num]['home']
+                #print(type(homePeriod))
+                if "rinkSide" in  homePeriod:
+                    homeRinkSide.append(homePeriod['rinkSide'])
+                else: 
+                    homeRinkSide.append(np.NAN)
+
+                awayPeriod = dfs.iloc[:, j]['liveData']['linescore']['periods'][period_Num]['away']
+                #print(type(awayPeriod))
+                if "rinkSide" in  awayPeriod:
+                    awayRinkSide.append(homePeriod['rinkSide'])
+                else: 
+                    awayRinkSide.append(np.NAN)
+
+                
+            # search for events that are 'goal'    
             if event['result']['eventTypeId'] == "GOAL":
                 rows_list.append(event)
                 game_id.append(dfs.iloc[:, j].name)
                 strength.append(event['result']['strength']['code'])
                 awayTeam.append(dfs.iloc[:, j]['gameData']['teams']['away']['name'])
                 homeTeam.append(dfs.iloc[:, j]['gameData']['teams']['home']['name'])
+                period_Num = int(event['about']['period']) - 1 
+                #print(period_Num)
+                #print(len(dfs.iloc[:, j]['liveData']['linescore']['periods']))
+                homePeriod = dfs.iloc[:, j]['liveData']['linescore']['periods'][period_Num]['home']
+                #print(type(homePeriod))
+                if "rinkSide" in  homePeriod:
+                    homeRinkSide.append(homePeriod['rinkSide'])
+                else: 
+                    homeRinkSide.append(np.NAN)
+
+                awayPeriod = dfs.iloc[:, j]['liveData']['linescore']['periods'][period_Num]['away']
+                #print(type(awayPeriod))
+                if "rinkSide" in  awayPeriod:
+                    awayRinkSide.append(homePeriod['rinkSide'])
+                else: 
+                    awayRinkSide.append(np.NAN)
 
 
             # count += 1
@@ -62,9 +98,10 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
 
     if len({len(i) for i in toCheck}) == 1:
         df = pd.DataFrame(rows_list)
-    #print(df)
+        
+    print(df)
+    
     for i in range(df.shape[0]):
-
         event_idx.append(df['about'][i]['eventIdx'])
         period.append(df['about'][i]['period'])
         periodTime.append(df['about'][i]['periodTime'])
@@ -141,11 +178,13 @@ def tidyData(dfs: pd.DataFrame) -> pd.DataFrame:
 
     #shorthand check if all lens are equal
     assert(all(len(lst) == len(event_idx) for lst in [event_idx, period, periodTime, teamInfo, isGoal,
-               shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength, awayTeam, homeTeam]) )
+               shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength, homeTeam, homeRinkSide, awayTeam, awayRinkSide]) )
 
     df2 = pd.DataFrame(np.column_stack([game_id, event_idx, period, periodTime, teamInfo, isGoal,
-                                        shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, strength, awayTeam, homeTeam]),
+                                        shotType, coordinates_x, coordinates_y, shooter, goalie, emptyNet, 
+                                        strength, homeTeam, homeRinkSide, awayTeam, awayRinkSide]),
                        columns=['game_id', 'event_idx', 'period', 'periodTime', 'teamInfo', 'isGoal',
-                                'shotType', 'coordinates_x', 'coordinates_y', 'shooter', 'goalie', 'emptyNet','strength', 'awayTeam', 'homeTeam'])
+                                'shotType', 'coordinates_x', 'coordinates_y', 'shooter', 'goalie', 'emptyNet',
+                                'strength', 'homeTeam', 'homeRinkSide', 'awayTeam', 'awayRinkSide'])
 
     return df2

@@ -390,7 +390,7 @@ def processGameData(gameJSON):
             
             # Update 'shots and goals' dataframe with 'shooters and goalies'
             shotsAndGoalsDF = shotsAndGoalsDF.join(shooterAndGolieDF)
-            print(shotsAndGoalsDF.columns)
+            #print(shotsAndGoalsDF.columns)
         
             # TODO: drop unnecessary columns 
             # TODO: rename Columns

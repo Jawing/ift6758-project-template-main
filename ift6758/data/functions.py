@@ -438,3 +438,96 @@ def getNHLData( listOfSeasons ):
               
 
     return NHLDataDF
+
+
+
+
+def distAngle_FromGoal(x,y,homeSide,period,teamInfo,homeTeam,awayTeam,periodType) :
+    """
+    find distance and angle from coordinates
+    
+    """
+
+    #assumes all opponent_coordinate is set to [-90,0] first
+    goal_x , goal_y = -90,0
+
+    # just change the coordinate for away side and rotate by 180 for periods 1,3,5 (and not 2,4,6...etc) and home team on 2,4,6..etc. 
+    # if x > 0:
+    #     x, y = event.coordinates_x * -1.0, event.coordinates_y * -1.0
+    
+    #even peiod 2,4,6
+    if(str(homeSide) != 'NA' and str(periodType != 'SHOOTOUT')):
+        if( int(period ) % 2 == 0):
+            #home start on the right side change coordinates for homeTeam
+            if( str(teamInfo) == str(homeTeam) ) and ( str(homeSide) == 'right' ):
+                #x, y = x * -1.0, y * -1.0
+                goal_x , goal_y = 90,0
+            #home start on the left side change coordinates for awayTeam
+            elif( str(teamInfo) == str(awayTeam) ) and ( str(homeSide) == 'left' ):
+                #x, y = x * -1.0, y * -1.0
+                goal_x , goal_y = 90,0
+        #odd peiod 1,3,5
+        else:
+            #home start on the right side change coordinates for awayTeam
+            if( str(teamInfo) == str(awayTeam) ) and ( str(homeSide) == 'right' ):
+                #x, y = x * -1.0, y * -1.0
+                goal_x , goal_y = 90,0
+            #home start on the left side change coordinates for homeTeam    
+            elif( str(teamInfo) == str(homeTeam) ) and ( str(homeSide) == 'left' ):
+               #x, y = x * -1.0, y * -1.0
+               goal_x , goal_y = 90,0
+    else:
+        #apply heuristic if rinkSide info is not available
+        #apply heuristic for shootouts
+        if x > 0:
+            #x, y = x * -1.0, y * -1.0
+            goal_x , goal_y = 90,0
+
+    # recentered calculations
+    # #recenter
+    # x += 50    
+
+    # #rotate 90 degrees clockwise
+    # rx = y
+    # ry = -x
+
+    # #recalibrate to image coordinate axis
+    # rx += 42.5
+    # ry += 50
+
+    # #calculate distance from goal
+    # dist = np.sqrt((42.5-rx)**2 + (90-ry)**2)
+
+    # if ry>90 and rx>42.5:
+    #     angle = np.arcsin(0)+np.arcsin(y-90/dist)
+    # elif y>90 and x<42.5:
+    #     angle = np.arcsin(-1)-np.arcsin(y-90/dist)
+    # #for general case
+    # else:
+    #     np.arcsin(rx-42.5/dist) 
+
+    # angle = abs(angle)
+    # return rx,ry,dist,angle
+
+
+    #calculate distance from goal
+    dist = np.sqrt((goal_x-x)**2 + (goal_y-y)**2)
+
+    #behind the net
+    if y>=0 and x>90 :
+        angle = np.arcsin(0)+np.arcsin((abs(x)-90)/dist)
+    elif y<0 and x>90:
+        angle = np.arcsin(-1)-np.arcsin((abs(x)-90)/dist)
+    elif y<0 and x<-90:
+        angle = np.arcsin(0)+np.arcsin((abs(x)-90)/dist)
+    elif y>=0 and x<-90:
+        angle = np.arcsin(-1)-np.arcsin((abs(x)-90)/dist)
+    #for general case
+    else: 
+        if goal_x == 90:
+            angle = np.arcsin(y/dist)
+        else:
+            angle = np.arcsin(-y/dist)
+
+    #angle = abs(angle)
+    return dist,np.degrees(angle)

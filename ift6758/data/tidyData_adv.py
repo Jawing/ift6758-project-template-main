@@ -41,6 +41,9 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
     #define list for each feature
     rows_list, last_event, speed, periodSeconds_last, eventType_last, rebound, event_idx, game_id, period, periodType, periodTime,periodSeconds, teamInfo, isGoal, shotType, \
     coordinates_x, coordinates_y, coordinates_x_last, coordinates_y_last, dist_goal, angle_goal, angle_change,distance_last, angle_speed, shooter, goalie, emptyNet, strength,homeTeam,awayTeam, homeSide = ([] for i in range(31))
+    
+    # Avoid divide by zero 
+    eps = 1e-8
 
     #loop through all games in the year
     for j in range(dfs.shape[1]): # dfs.shape[1]

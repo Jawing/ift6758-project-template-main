@@ -512,6 +512,8 @@ def distAngle_FromGoal(x,y,homeSide,period,teamInfo,homeTeam,awayTeam,periodType
 
     #calculate distance from goal
     dist = np.sqrt((goal_x-x)**2 + (goal_y-y)**2)
+    #avoid divide by zero
+    eps = 1e-8
 
     #behind the net
     if y>=0 and x>90 :
@@ -528,6 +530,10 @@ def distAngle_FromGoal(x,y,homeSide,period,teamInfo,homeTeam,awayTeam,periodType
             angle = np.arcsin(y/dist)
         else:
             angle = np.arcsin(-y/dist)
+
+    # set default angle if distance is at goal
+    if dist < eps:
+        angle = 0
 
     #angle = abs(angle)
     return dist,np.degrees(angle)

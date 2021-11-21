@@ -102,10 +102,6 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
         a_timedelta = date_time - datetime.datetime(1900, 1, 1)
         periodSeconds.append(a_timedelta.total_seconds())
         
-        #period time from last event
-        date_time_last = datetime.datetime.strptime(df_last['about'][i]['periodTime'], "%M:%S")
-        a_timedelta_last = date_time - date_time_last
-        periodSeconds_last.append(a_timedelta_last.total_seconds())
 
         #last event type
         eventType_last.append(df_last['result'][i]['eventTypeId'])
@@ -160,10 +156,18 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
             coordinates_y_last.append(pd.NA)
 
         #calculate distance between current and last event if both coordinate exist
+        #period time from last event
+        date_time_last = datetime.datetime.strptime(df_last['about'][i]['periodTime'], "%M:%S")
+        a_timedelta_last = (date_time - date_time_last).total_seconds()
+        #set average under one second to 0.5 prevent inf speed values 
+        if a_timedelta_last < 1:
+            a_timedelta_last = 0.5
+        periodSeconds_last.append(a_timedelta_last)
+
         if na_coor == False:
             dist_last = np.sqrt((l_x - c_x)**2 + (l_y-c_y)**2)
             distance_last.append(dist_last)
-            speed.append(dist_last/a_timedelta_last.total_seconds())
+            speed.append(dist_last/a_timedelta_last)
             
         else:
             distance_last.append(pd.NA)
@@ -181,7 +185,7 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
                 else:
                     angle_change.append(angle_c)
                 #Change in shot angle after rebound TODO
-                angle_speed.append(angle_c/a_timedelta_last.total_seconds())
+                angle_speed.append(angle_c/a_timedelta_last)
             else:
                 angle_change.append(0)
                 angle_speed.append(pd.NA)
@@ -243,4 +247,6 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
     df2 = pd.DataFrame(np.column_stack([game_id, event_idx, speed, periodSeconds_last, eventType_last, rebound, period, periodType, periodTime,periodSeconds, teamInfo, isGoal, shotType, coordinates_x, coordinates_y, coordinates_x_last, coordinates_y_last, distance_last,dist_goal, angle_goal, angle_change, angle_speed, shooter, goalie, emptyNet, strength,homeTeam,awayTeam, homeSide]),
                        columns=['game_id', 'event_idx', 'speed', 'periodSeconds_last', 'eventType_last', 'rebound', 'period', 'periodType', 'periodTime','periodSeconds', 'teamInfo', 'isGoal', 'shotType', 'coordinates_x', 'coordinates_y', 'coordinates_x_last', 'coordinates_y_last', 'distance_last','dist_goal', 'angle_goal', 'angle_change', 'angle_speed', 'shooter', 'goalie', 'emptyNet', 'strength','homeTeam','awayTeam', 'homeSide'])
 
+    df2.loc[df2['strength'] == 'NA','strength'] = pd.NA
+    df2.loc[df2['homeSide'] == 'NA','homeSide'] = pd.NA
     return df2

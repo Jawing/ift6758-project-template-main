@@ -41,6 +41,9 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
     #define list for each feature
     rows_list, last_event, speed, periodSeconds_last, eventType_last, rebound, event_idx, game_id, period, periodType, periodTime,periodSeconds, teamInfo, isGoal, shotType, \
     coordinates_x, coordinates_y, coordinates_x_last, coordinates_y_last, dist_goal, angle_goal, angle_change,distance_last, angle_speed, shooter, goalie, emptyNet, strength,homeTeam,awayTeam, homeSide = ([] for i in range(31))
+    
+    # Avoid divide by zero 
+    eps = 1e-8
 
     #loop through all games in the year
     for j in range(dfs.shape[1]): # dfs.shape[1]
@@ -163,7 +166,7 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
         if na_coor == False:
             dist_last = np.sqrt((l_x - c_x)**2 + (l_y-c_y)**2)
             distance_last.append(dist_last)
-            speed.append(dist_last/a_timedelta_last.total_seconds())
+            speed.append(dist_last/ (a_timedelta_last.total_seconds() + eps ))
             
         else:
             distance_last.append(pd.NA)
@@ -181,7 +184,7 @@ def tidyData_adv(dfs: pd.DataFrame) -> pd.DataFrame:
                 else:
                     angle_change.append(angle_c)
                 #Change in shot angle after rebound TODO
-                angle_speed.append(angle_c/a_timedelta_last.total_seconds())
+                angle_speed.append(angle_c/( a_timedelta_last.total_seconds() + eps ) )
             else:
                 angle_change.append(0)
                 angle_speed.append(pd.NA)

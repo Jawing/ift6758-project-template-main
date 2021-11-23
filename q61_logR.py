@@ -20,8 +20,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 
-# import sys
-# sys.path.append('C:\Users\ccarc\Desktop\IFT 6758\ift6758-project-template-main')
 #local imports
 from ift6758.data.functions import loadstats
 from ift6758.data.functions import pre_process
@@ -61,24 +59,25 @@ logistic = LogisticRegression(max_iter=10000, tol=0.1)
 pipe = Pipeline(steps=[('scaler', StandardScaler()), ("pca", PCA()), ("logistic", logistic)])
 # Parameters of pipelines can be set using ‘__’ separated parameter names:
 param_grid = {
-    "pca__n_components": [45, 64, 85, 90],
+    "pca__n_components": [64, 85, 90,110],
     "logistic__C": np.logspace(-4, 4, 4),
 }
 
 search_logR = GridSearchCV(pipe, param_grid, n_jobs=-1)
-search_logR.fit(X_train, y_train)
+#search_logR.fit(X_train, y_train)
 
 #save model
-dump(search_logR, './models/Q6logR_s.joblib')
+#dump(search_logR, './models/Q6logR_s.joblib')
 
 #load model
-#search_logR = load('./models/Q6logR_s.joblib')
+search_logR = load('./models/Q6logR_s.joblib')
 
 print("Best parameter (CV score=%0.3f):" % search_logR.best_score_)
 print(search_logR.best_params_)
 y_pred = search_logR.predict(X_test)
 print("\nResults\nConfusion matrix \n {}".format(confusion_matrix(y_test, y_pred)))
 
+experiment.log_confusion_matrix(y_test, y_pred)
 
 #plot roc
 from sklearn.metrics import roc_curve, auc
@@ -185,5 +184,5 @@ metrics = {"f1":f1,
 experiment.log_dataset_hash(X_train)
 experiment.log_parameters(params)
 experiment.log_metrics(metrics)
-experiment.log_model("Q6_Full_logistic_reg", "./model/Q6logR_s.joblib")
+experiment.log_model("Q6_Full_logistic_reg", "./models/Q6logR_s.joblib")
 #experiment.end()

@@ -544,14 +544,20 @@ def distAngle_FromGoal(x,y,homeSide,period,teamInfo,homeTeam,awayTeam,periodType
 def pre_process(dfs: pd.DataFrame, hd=False) -> pd.DataFrame:
     
     #drop irrelevant columns
-    dfs = dfs.drop(['game_id','event_idx','awayTeam','periodTime'], axis=1)
+    dfs = dfs.drop(['game_id','event_idx','periodTime'], axis=1)
+
     # remove all columns with  =>60% pd.NA
-    dfs = dfs.loc[:,(dfs.isnull().sum() / len(dfs)) < 0.6]
+    #dfs = dfs.loc[:,(dfs.isnull().sum() / len(dfs)) < 0.6]
+    dfs = dfs.drop(['angle_speed','strength'], axis=1)
+
 
     # remove all rows with null values
     dfs = dfs[dfs['speed'].notnull()]
     dfs = dfs[dfs['homeSide'].notnull()]
     dfs = dfs[dfs['shotType'].notnull()]
+    dfs = dfs[dfs['isGoal'].notnull()]
+    dfs = dfs[dfs['rebound'].notnull()]
+    dfs = dfs[dfs['emptyNet'].notnull()]
     dfs = dfs[dfs['goalie'].notnull()]
 
     #change of variable
@@ -561,7 +567,9 @@ def pre_process(dfs: pd.DataFrame, hd=False) -> pd.DataFrame:
     dfs['homeSide'].replace(['right', 'left'], [0.0, 1.0], inplace=True)
 
     #one hot/ordinal encoding
-    dfs['periodType'].replace(['REGULAR', 'OVERTIME', 'SHOOTOUT'], ['1', '2', '3'], inplace=True)
+    #dfs['periodType'].replace(['REGULAR', 'OVERTIME', 'SHOOTOUT'], [1, 2, 3], inplace=True)
+    dfs = dfs.merge(pd.get_dummies(dfs['periodType'], prefix='periodType'), left_index=True, right_index=True)
+    dfs = dfs.drop(['periodType'], axis=1)
     dfs = dfs.merge(pd.get_dummies(dfs['eventType_last'], prefix='eventType_last'), left_index=True, right_index=True)
     dfs = dfs.drop(['eventType_last'], axis=1)
     dfs = dfs.merge(pd.get_dummies(dfs['teamInfo'], prefix='teamInfo'), left_index=True, right_index=True)
@@ -577,7 +585,10 @@ def pre_process(dfs: pd.DataFrame, hd=False) -> pd.DataFrame:
     dfs = dfs.drop(['goalie'], axis=1)
 
     dfs = dfs.merge(pd.get_dummies(dfs['homeTeam'], prefix='homeTeam'), left_index=True, right_index=True)
-    dfs_cleaned = dfs.drop(['homeTeam'], axis=1)
+    dfs = dfs.drop(['homeTeam'], axis=1)
+    dfs = dfs.merge(pd.get_dummies(dfs['awayTeam'], prefix='awayTeam'), left_index=True, right_index=True)
+    dfs_cleaned = dfs.drop(['awayTeam'], axis=1)
+
     #replace values in dataframe
     #dfs.loc[(dfs['periodSeconds_last']==0) & (dfs['speed'].isnull()),'speed'] = 0
 

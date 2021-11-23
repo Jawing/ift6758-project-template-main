@@ -9,7 +9,6 @@ experiment = Experiment(
 )
 
 
-
 #general imports
 import os
 import numpy as np 
@@ -26,8 +25,6 @@ from ift6758.data.functions import pre_process
 from ift6758.data.tidyData_adv import tidyData_adv
 
 import pickle
-#load tidydata
-#df_train = pickle.load( open("./data/data_train_tidy.pickle",'rb'))
 
 #import sklearn modules
 from sklearn.preprocessing import StandardScaler
@@ -64,20 +61,22 @@ param_grid = {
 }
 
 search_logR = GridSearchCV(pipe, param_grid, n_jobs=-1)
-#search_logR.fit(X_train, y_train)
 
 #save model
-#dump(search_logR, './models/Q6logR_s.joblib')
+search_logR.fit(X_train, y_train)
+dump(search_logR, './models/Q6logR_s.joblib')
 
 #load model
-search_logR = load('./models/Q6logR_s.joblib')
+#search_logR = load('./models/Q6logR_s.joblib')
 
+#get confusion matrix and predictions
 print("Best parameter (CV score=%0.3f):" % search_logR.best_score_)
 print(search_logR.best_params_)
 y_pred = search_logR.predict(X_test)
-print("\nResults\nConfusion matrix \n {}".format(confusion_matrix(y_test, y_pred)))
-
-experiment.log_confusion_matrix(y_test, y_pred)
+#print("\nResults\nConfusion matrix \n {}".format(confusion_matrix(y_test, y_pred)))
+#print(confusion_matrix(y_test, y_pred))
+experiment.log_confusion_matrix(labels=["No_Goal", "Goal"],
+  matrix=confusion_matrix(y_test, y_pred))
 
 #plot roc
 from sklearn.metrics import roc_curve, auc
@@ -117,11 +116,9 @@ lr_probs_y[::-1].sort()
 # print(sum(lr_probs_y))
 #print(lr_probs_y)
 lr_probs_y_sum = np.cumsum(lr_probs_y)
-#lr_probs_x = ((sum(lr_probs_y)-lr_probs_y_sum[:])/sum(lr_probs_y))*100
-
 #print(lr_probs_y_sum)
-#goal rate
 
+#goal rate
 plt.figure()
 plt.plot(
     x_axis,
@@ -154,8 +151,6 @@ disp = CalibrationDisplay.from_estimator(search_logR, X_test, y_test, name='Logi
 plt.title("Reliability diagram")
 plt.savefig('./figures/q61_logR_RD.png')
 plt.show()
-
-
 
 
 

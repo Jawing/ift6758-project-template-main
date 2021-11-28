@@ -30,16 +30,16 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import roc_auc_score, classification_report
 from sklearn.calibration import calibration_curve, CalibrationDisplay
 
-dfs_2015 = loadstats(2015,'./data/')
+dfs_2015 = loadstats(2015,'./data/', playoffs=False,regular=True)
 df_2015 = tidyData_adv(dfs_2015)
 
-dfs_2016 = loadstats(2016,'./data/')
+dfs_2016 = loadstats(2016,'./data/', playoffs=False,regular=True)
 df_2016 = tidyData_adv(dfs_2016)
 
-dfs_2017 = loadstats(2017,'./data/')
+dfs_2017 = loadstats(2017,'./data/', playoffs=False,regular=True)
 df_2017 = tidyData_adv(dfs_2017)
 
-dfs_2018 = loadstats(2018,'./data/')
+dfs_2018 = loadstats(2018,'./data/', playoffs=False,regular=True)
 df_2018 = tidyData_adv(dfs_2018)
 
 # dfs_2019 = loadstats(2019,'./data/')

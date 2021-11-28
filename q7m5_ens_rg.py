@@ -46,7 +46,7 @@ from sklearn.preprocessing import LabelEncoder
 # Splitting the dataset into the Training set and Test set for grid search CV 
 #preprocess
 #load preprocessed data
-df_prep = pickle.load( open("./data/data_test_prep.pickle",'rb'))
+df_prep = pickle.load( open("./data/data_test_rg_prep.pickle",'rb'))
 y = df_prep['isGoal']
 X = df_prep.drop(['isGoal'], axis=1)
 

@@ -49,19 +49,19 @@ import pickle
 api = API()
 
 # Download a Registry Model
-api.download_registry_model( "binulal", "q3-logreg-distance", "2.0.0", output_path="./models/", expand=True )
+api.download_registry_model( "binulal", "q3-logreg-angle", "2.0.0", output_path="./models/", expand=True )
 
 df_test = pickle.load(open('data/data_test_po_tidy.pickle', 'rb'));
                       
-df_prep = df_test[["dist_goal", "isGoal"]].dropna()
+df_prep = df_test[["angle_goal", "isGoal"]].dropna()
 
-X = df_prep[["dist_goal"]]
+X = df_prep[["angle_goal"]]
 y = df_prep["isGoal"].apply( lambda x : 1 if x else 0 )
 
 
 print( X, np.unique(y, return_counts=True) )
 #load model pickle.load(open('model.pkl', 'rb'))
-clf = pickle.load(open('./models/Q31_log_reg_distance.pkl', 'rb'))
+clf = pickle.load(open('./models/Q32_log_reg_angle.pkl', 'rb'))
 
 y_pred = clf.predict(X)
 

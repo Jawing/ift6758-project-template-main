@@ -1,5 +1,5 @@
 #
-#   Test Lg distance model using 2019 data
+#   Test on 2019 data with model from registry
 #
 #
 
@@ -16,7 +16,7 @@ experiment = Experiment(
 )
 
 #imports
-#from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix
 
 from ift6758.data.functions import loadstats
@@ -28,7 +28,7 @@ from ift6758.data.tidyData_adv import tidyData_adv
 
 #import plotly.express as px
 #import pandas as pd
-#import numpy as np
+import numpy as np
 #import json
 import pickle
 
@@ -43,30 +43,27 @@ import pickle
 
 
 #df_all = df_test_po.append(df_test_rg, ignore_index=True)
-#df_test = pre_process(df_test_rg)
+#df_test = pre_process(df_test_po)
 
 # Initialize API
 api = API()
 
 # Download a Registry Model
-api.download_registry_model( "binulal", "q3-logreg-angle", "2.0.0", output_path="./models/", expand=True )
+api.download_registry_model( "binulal", "q3-logreg-angledistance", "2.0.0", output_path="./models/", expand=True )
 
-df_test = pickle.load(open('data/data_test_rg_tidy.pickle', 'rb'));
+df_test = pickle.load(open('data/data_test_po_tidy.pickle', 'rb'));
+                      
+df_prep = df_test[["dist_goal", "angle_goal", "isGoal"]].dropna()
 
-data_distance = df_test[["angle_goal", "isGoal"]].dropna()
-
-X = data_distance[["angle_goal"]]
-y = data_distance["isGoal"].apply( lambda x : 1 if x else 0 )
-
-print( X, y )
+X = df_prep[["dist_goal", "angle_goal"]]
+y = df_prep["isGoal"].apply( lambda x : 1 if x else 0 )
 
 
+print( X, np.unique(y, return_counts=True) )
 #load model pickle.load(open('model.pkl', 'rb'))
-clf = pickle.load(open('./models/Q32_log_reg_angle.pkl', 'rb'))
-
+clf = pickle.load(open('./models/Q33_log_reg_distance_angle.pkl', 'rb'))
+print(type(clf))
 y_pred = clf.predict(X)
-
-print("Predictions : ", y_pred)
 
 experiment.log_confusion_matrix(
     labels=["No_Goal", "Goal"],  matrix=confusion_matrix(y, y_pred) )

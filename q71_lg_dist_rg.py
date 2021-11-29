@@ -51,7 +51,7 @@ api = API()
 # Download a Registry Model
 api.download_registry_model( "binulal", "q3-logreg-distance", "2.0.0", output_path="./models/", expand=True )
 
-df_test = pickle.load(open('data/data_test_po_tidy.pickle', 'rb'));
+df_test = pickle.load(open('data/data_test_rg_tidy.pickle', 'rb'));
 
 data_distance = df_test[["dist_goal", "isGoal"]].dropna()
 

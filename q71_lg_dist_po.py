@@ -28,7 +28,7 @@ from ift6758.data.tidyData_adv import tidyData_adv
 
 #import plotly.express as px
 #import pandas as pd
-#import numpy as np
+import numpy as np
 #import json
 import pickle
 
@@ -59,7 +59,7 @@ X = df_prep[["dist_goal"]]
 y = df_prep["isGoal"].apply( lambda x : 1 if x else 0 )
 
 
-print( X, y )
+print( X, np.unique(y, return_counts=True) )
 #load model pickle.load(open('model.pkl', 'rb'))
 clf = pickle.load(open('./models/Q31_log_reg_distance.pkl', 'rb'))
 

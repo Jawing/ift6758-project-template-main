@@ -43,7 +43,7 @@ from joblib import dump, load
 from sklearn.ensemble import VotingClassifier
 from sklearn.preprocessing import LabelEncoder
 
-# Splitting the dataset into the Training set and Test set for grid search CV 
+# Splitting the dataset into the Training set and Test set for grid search CV
 #preprocess
 #load preprocessed data
 df_prep = pickle.load( open("./data/data_test_rg_prep.pickle",'rb'))
@@ -51,27 +51,27 @@ y = df_prep['isGoal']
 X = df_prep.drop(['isGoal'], axis=1)
 
 #load models for ensembling (assume pretrained)
-search_mlp = load('./models/Q6mlp_s.joblib')
-search_ada = load('./models/Q6ada_s.joblib')
-search_rf = load('./models/Q6rf_s.joblib')
-search_logR = load('./models/Q6logR_s.joblib')
+# search_mlp = load('./models/Q6mlp_s.joblib')
+# search_ada = load('./models/Q6ada_s.joblib')
+# search_rf = load('./models/Q6rf_s.joblib')
+# search_logR = load('./models/Q6logR_s.joblib')
 
-clf_list = [search_rf,search_mlp,search_logR,search_ada]
+# clf_list = [search_rf,search_mlp,search_logR,search_ada]
 
-#model pipeline
-search_ens = VotingClassifier(
-    estimators=[
-        ('1', search_rf), # rf
-        ('2', search_mlp), # nn
-        ('3', search_logR), # Logistic Regression
-        ('4', search_ada), # adaboost
-        ],
-    weights=[1, 1, 1, 1],
-    voting='soft')
+# #model pipeline
+# search_ens = VotingClassifier(
+#     estimators=[
+#         ('1', search_rf), # rf
+#         ('2', search_mlp), # nn
+#         ('3', search_logR), # Logistic Regression
+#         ('4', search_ada), # adaboost
+#         ],
+#     weights=[1, 1, 1, 1],
+#     voting='soft')
 
-search_ens.estimators_ = clf_list
-search_ens.le_ = LabelEncoder().fit(y)
-search_ens.classes_ = search_ens.le_.classes_
+# search_ens.estimators_ = clf_list
+# search_ens.le_ = LabelEncoder().fit(y)
+# search_ens.classes_ = search_ens.le_.classes_
 
 #load model
 search_ens = load('./models/Q6ens_s.joblib')
@@ -98,7 +98,7 @@ display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
 display.plot()
 plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
 plt.title("ROC of Voting Ensemble")
-plt.savefig('./figures/q7m5_ens_ROC.png')
+plt.savefig('./figures/q7m5_ens_rg_ROC.png')
 plt.show()
 
 
@@ -127,7 +127,7 @@ plt.ylim([0.0, 1.0])
 plt.xlabel("Shot prob model percentile")
 plt.ylabel("Goals / (Shots + Goals)")
 plt.title("Goal Rate of Ensemble")
-plt.savefig('./figures/q7m5_ens_GR.png')
+plt.savefig('./figures/q7m5_ens_rg_GR.png')
 plt.show()
 
 #cumulative plot
@@ -141,13 +141,13 @@ plt.ylim([0.0, 1.0])
 plt.xlabel("Shot prob model percentile")
 plt.ylabel("Proportion")
 plt.title("Cumulative % of goals")
-plt.savefig('./figures/q7m5_ens_CP.png')
+plt.savefig('./figures/q7m5_ens_rg_CP.png')
 plt.show()
 
 from sklearn.calibration import CalibrationDisplay
 disp = CalibrationDisplay.from_estimator(search_ens, X, y, name='Ensemble')
 plt.title("Reliability diagram")
-plt.savefig('./figures/q7m5_ens_RD.png')
+plt.savefig('./figures/q7m5_ens_rg_RD.png')
 plt.show()
 
 

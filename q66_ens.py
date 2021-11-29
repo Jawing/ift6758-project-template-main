@@ -76,10 +76,10 @@ search_ens.le_ = LabelEncoder().fit(y_test)
 search_ens.classes_ = search_ens.le_.classes_
 
 #save model
-#dump(search_ens, './models/Q6ens_s.joblib')
+dump(search_ens, './models/Q6ens_s.joblib')
 
 #load model
-search_ens = load('./models/Q6ens_s.joblib')
+#search_ens = load('./models/Q6ens_s.joblib')
 
 y_pred = search_ens.predict(X_test)
 #print("\nResults\nConfusion matrix \n {}".format(confusion_matrix(y_test, y_pred)))

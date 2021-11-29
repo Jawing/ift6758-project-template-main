@@ -59,17 +59,17 @@ pipe = Pipeline(steps=[('scaler', StandardScaler()), ("pca", PCA(n_components = 
 
 # Parameters of pipelines can be set using ‘__’ separated parameter names:
 parameter_space = {
-    'mlp__hidden_layer_sizes': [(60,60),(30,30),(100,100),(200)]
+    'mlp__hidden_layer_sizes': [(60,60),(20,20,20),(100,100),(200)]
 }
 
 
 search_mlp = GridSearchCV(pipe, parameter_space, cv=3, n_jobs=-1, verbose=2)
 #save model
-#search_mlp.fit(X_train, y_train)
-#dump(search_mlp, './models/Q6mlp_s.joblib')
+search_mlp.fit(X_train, y_train)
+dump(search_mlp, './models/Q6mlp_s.joblib')
 
 #load model
-search_mlp = load('./models/Q6mlp_s.joblib')
+#search_mlp = load('./models/Q6mlp_s.joblib')
 
 #get confusion matrix and predictions
 print("Best parameter (CV score=%0.3f):" % search_mlp.best_score_)

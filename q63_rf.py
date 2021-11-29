@@ -68,11 +68,11 @@ search_rf = RandomForestClassifier(n_jobs=-1, max_depth=16, n_estimators = 500, 
 
 
 #save model
-#search_rf.fit(X_train, y_train)
-#dump(search_rf, './models/Q6rf_s.joblib')
+search_rf.fit(X_train, y_train)
+dump(search_rf, './models/Q6rf_s.joblib')
 
 #load model
-search_rf = load('./models/Q6rf_s.joblib')
+#search_rf = load('./models/Q6rf_s.joblib')
 
 #get confusion matrix and predictions
 # print("Best parameter (CV score=%0.3f):" % search_rf.best_score_)

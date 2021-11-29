@@ -56,11 +56,11 @@ search_svc = Pipeline(steps=[('scaler', StandardScaler()), ("pca", PCA(n_compone
 
 
 #save model
-#search_svc.fit(X_train, y_train)
-#dump(search_svc, './models/Q6svc_s.joblib')
+search_svc.fit(X_train, y_train)
+dump(search_svc, './models/Q6svc_s.joblib')
 
 #load model
-search_svc = load('./models/Q6svc_s.joblib')
+#search_svc = load('./models/Q6svc_s.joblib')
 
 #get confusion matrix and predictions
 # print("Best parameter (CV score=%0.3f):" % search_svc.best_score_)

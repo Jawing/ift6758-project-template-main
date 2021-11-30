@@ -9,6 +9,7 @@ from comet_ml import init, API, Experiment
 
 
 import pickle
+import pandas as pd
 from xgboost import XGBClassifier  
 
 # Init comet ml
@@ -35,8 +36,18 @@ target = ["isGoal"]
 
 data_xgboost = data_xgboost.dropna()
 
-X = data_xgboost[ features ]
+X_pre = data_xgboost[ features ]
 y = data_xgboost[ target ]
+
+# onehot encoding
+df = pd.get_dummies(X_pre[["shotType", "eventType_last"]])
+
+#Concat new and the previous dataframe
+X_post = pd.concat([X_pre,df], axis = 1)
+
+#dropping the two columns 
+X = X_post.drop(['shotType', 'eventType_last'], axis = 1)
+
 
 # Initialize API
 api = API()

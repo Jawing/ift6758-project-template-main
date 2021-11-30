@@ -22,24 +22,28 @@ experiment = Experiment(
 )
 
 # Get data and pre process
-data_xgboost = pickle.load(open('data/data_test_rg_tidy.pickle', 'rb'));
+data_xgboost = pickle.load(open('data/data_test_po_tidy.pickle', 'rb'));
 
 #changing categorical 
 data_xgboost["rebound"] = data_xgboost["rebound"].apply( lambda x : 1 if x else 0 )
 
 #print(data_xgboost.isna().sum())
-features = ["periodSeconds", "period", "coordinates_x", "coordinates_y",
-            "dist_goal", "angle_goal", "shotType", "eventType_last",
-            "coordinates_x_last","coordinates_y_last", "distance_last",
-            "periodSeconds_last","rebound","angle_change","speed" ]
-target = ["isGoal"]
+#features = ["periodSeconds", "period", "coordinates_x", "coordinates_y",
+#            "dist_goal", "angle_goal", "shotType", "eventType_last",
+#            "coordinates_x_last","coordinates_y_last", "distance_last",
+#            "periodSeconds_last","rebound","angle_change","speed" ]
+#target = ["isGoal"]
+#X_pre = data_xgboost[ features ]
+#y = data_xgboost[ target ]
 
+data_xgboost = data_xgboost[["periodSeconds", "period", "coordinates_x", "coordinates_y","dist_goal", "angle_goal", 
+                             "shotType", "eventType_last", "coordinates_x_last","coordinates_y_last", "distance_last",
+                             "periodSeconds_last","rebound","angle_change","speed", "isGoal"]]
 
-data_xgboost = data_xgboost.dropna()
+data_xgboost_new = data_xgboost.dropna()
 
-X_pre = data_xgboost[ features ]
-y = data_xgboost[ target ]
-
+X_pre = data_xgboost_new.iloc[:, :-1]
+y = data_xgboost_new.iloc[:, -1].apply( lambda x : 1 if x else 0 )
 
 df = pd.get_dummies(X_pre[["shotType", "eventType_last"]])
 #df 
@@ -61,8 +65,7 @@ xgb_clf = pickle.load(open('./models/Q52_XGboost_hyperparameter.pkl', 'rb'))
 
 y_pred = xgb_clf.predict(X)
 
-experiment.log_confusion_matrix(labels=["No_Goal", "Goal"],
-  matrix=confusion_matrix(y, y_pred))
+experiment.log_confusion_matrix(labels=["No_Goal", "Goal"], matrix=confusion_matrix(y, y_pred))
 
 
 #quantitative metrics

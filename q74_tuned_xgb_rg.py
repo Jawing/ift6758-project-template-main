@@ -22,25 +22,22 @@ experiment = Experiment(
 )
 
 # Get data and pre process
-data_xgboost = pickle.load(open('data/data_test_po_tidy.pickle', 'rb'));
+data_xgboost = pickle.load(open('data/data_test_rg_tidy.pickle', 'rb'));
 
 #changing categorical 
 data_xgboost["rebound"] = data_xgboost["rebound"].apply( lambda x : 1 if x else 0 )
 
-#print(data_xgboost.isna().sum())
-features = ["periodSeconds", "period", "coordinates_x", "coordinates_y",
-            "dist_goal", "angle_goal", "shotType", "eventType_last",
-            "coordinates_x_last","coordinates_y_last", "distance_last",
-            "periodSeconds_last","rebound","angle_change","speed" ]
-target = ["isGoal"]
+data_xgboost = data_xgboost[["periodSeconds", "period", "coordinates_x", "coordinates_y","dist_goal", "angle_goal", 
+                             "shotType", "eventType_last", "coordinates_x_last","coordinates_y_last", "distance_last",
+                             "periodSeconds_last","rebound","angle_change","speed", "isGoal"]]
 
-data_xgboost = data_xgboost.dropna()
+data_xgboost_new = data_xgboost.dropna()
 
-X_pre = data_xgboost[ features ]
-y = data_xgboost[ target ]
+X_pre = data_xgboost_new.iloc[:, :-1]
+y = data_xgboost_new.iloc[:, -1].apply( lambda x : 1 if x else 0 )
 
-# onehot encoding
 df = pd.get_dummies(X_pre[["shotType", "eventType_last"]])
+#df 
 
 #Concat new and the previous dataframe
 X_post = pd.concat([X_pre,df], axis = 1)

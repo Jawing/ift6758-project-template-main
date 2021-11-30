@@ -3,10 +3,13 @@
 #
 #
 
-import pickle
 
 #import model tracking
 from comet_ml import init, API, Experiment
+
+
+import pickle
+from xgboost import XGBClassifier  
 
 # Init comet ml
 init()
@@ -41,7 +44,7 @@ api = API()
 # Download a Registry Model
 api.download_registry_model( "binulal", "q5-xgboost-tuned", "1.0.0", output_path="./models/", expand=True )
 
-xgb_clf = pickle.load(open('./models/Q53_XGboost_feature_tuned.pkl', 'rb'))
+xgb_clf = pickle.load(open('./models/Q52_XGboost_hyperparameter.pkl', 'rb'))
 
 y_pred = xgb_clf.predict(X)
 

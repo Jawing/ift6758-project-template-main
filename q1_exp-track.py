@@ -72,5 +72,7 @@ metrics = {"f1":f1,
 experiment.log_dataset_hash(X_train)
 experiment.log_metrics(metrics)
 
+# experiment.log_saved
+
 
 

@@ -11,6 +11,7 @@ from comet_ml import init, API, Experiment
 import pickle
 import pandas as pd
 from xgboost import XGBClassifier  
+from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix
 
 # Init comet ml
 init()
@@ -54,7 +55,7 @@ api.download_registry_model( "binulal", "q5-xgboost-tuned", "1.0.0", output_path
 
 xgb_clf = pickle.load(open('./models/Q52_XGboost_hyperparameter.pkl', 'rb'))
 
-y_pred = xgb_clf.predict(X)
+y_pred = xgb_clf.predict(X.astype('float'))
 
 experiment.log_confusion_matrix(labels=["No_Goal", "Goal"],
   matrix=confusion_matrix(y, y_pred))

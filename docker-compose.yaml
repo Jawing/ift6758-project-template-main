@@ -1,0 +1,30 @@
+# docker-compose.yml
+version: '3'
+
+services:
+  serving:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.serving
+#      args:
+#        ARG: <ARG>
+#    image: ift6758/serving:<TAG>
+#    ports:
+#      - <SERVING_PORT>:<SERVING_PORT>
+#    environment:
+#      DOCKER_ENV_VAR = ${LOCAL_ENV_VAR}
+###### Uncomment below when you're ready to add the final notebook container to your docker compose
+##  jupyter:
+##    build:
+##      context: ./
+##      dockerfile: ./Dockerfile.jupyter
+##      args:
+##        ARG: <ARG>
+##    image: ift6758/jupyter:<TAG>
+##    ports:
+##      - <JUPYTER_PORT>:<JUPYTER_PORT>
+##    environment:
+##      OTHER_DOCKER_ENV_VAR = ${OTHER_LOCAL_ENV_VAR}
+      
+
+     

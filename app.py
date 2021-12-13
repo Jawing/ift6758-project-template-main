@@ -118,10 +118,10 @@ def download_registry_model():
     # eg: app.logger.info(<LOG STRING>)
     
     global Model
-    if Path(f'./models/{Model_name}').exists():
+    if Path(f'./models/{Model_name}').exists() and Model_name != 'Q6ens_s.joblib':
         logging.info(f'Model exists and loaded: {Model_name}')
          
-        Model = joblib.load('./models/Q6ens_s.joblib')
+        Model = joblib.load(f'./models/{Model_name}')
         Model_loaded = True
     # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
     # about the model change. If it fails, write to the log about the failure and keep the 
@@ -135,7 +135,7 @@ def download_registry_model():
 
             logging.info(f'Model downloaded and loaded: {Model_name}')
 
-            Model = joblib.load('./models/Q6ens_s.joblib')
+            Model = joblib.load(f'./models/{Model_name}')
             Model_loaded =True
         except Exception as e:
             logging.info(f'Exception: {e}, Using default Model')

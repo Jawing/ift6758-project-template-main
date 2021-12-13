@@ -11,7 +11,7 @@ gunicorn can be installed via:
 import os
 from pathlib import Path
 import logging
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, render_template 
 import sklearn
 import pandas as pd
 import joblib
@@ -19,12 +19,19 @@ import joblib
 
 import ift6758
 
+#imports
+import comet_ml
+from comet_ml import API
+import pickle
+from waitress import serve
+
 
 LOG_FILE = os.environ.get("FLASK_LOG", "flask.log")
 
 
 app = Flask(__name__)
 
+Model = None
 
 @app.before_first_request
 def before_first_request():
@@ -33,21 +40,38 @@ def before_first_request():
     setup logging handler, etc.)
     """
     # TODO: setup basic logging configuration
-    logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
+    logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
 
-    # TODO: any other initialization before the first request (e.g. load default model)
+    #comet import default voting ens model
+    comet_ml.init()
+
+    if not Path(f'./models/Q6ens_s.joblib').exists():
+        api = API()
+        # Download a Registry Model: eg "Q6-Full-ens" registered model name
+        api.download_registry_model("binulal", "Q6-Full-ens", "2.0.0",
+                            output_path="./models", expand=True)
+
+    logging.info('Default model loaded: Voting ensemble')
+
+    global Model
+    Model = joblib.load('./models/Q6ens_s.joblib')
+    
     pass
 
 
 @app.route("/logs", methods=["GET"])
 def logs():
     """Reads data from the log file and returns them as the response"""
+    with open(LOG_FILE, 'r') as f:
+        return render_template('content.html', text=f.read())
     
-    # TODO: read the log file specified and return the data
-    raise NotImplementedError("TODO: implement this endpoint")
+    # def generate():
+    #     with open(LOG_FILE) as f:
+    #         while True:
+    #             yield f.read()
 
-    response = None
-    return jsonify(response)  # response must be json serializable!
+    # response = generate()
+    #return jsonify(response)  # response must be json serializable!
 
 
 @app.route("/download_registry_model", methods=["POST"])
@@ -71,21 +95,62 @@ def download_registry_model():
     json = request.get_json()
     app.logger.info(json)
 
-    # TODO: check to see if the model you are querying for is already downloaded
+    #Model name check
+    Model_name = ''
+    if json['model'] == 'Q6-Full-ens':
+        Model_name = 'Q6ens_s.joblib'
+    elif json['model'] == 'Q6-Full-mlp':
+        Model_name = 'Q6mlp_s.joblib'
+    elif json['model'] == 'Q6-Full-ada':
+        Model_name = 'Q6ada_s.joblib'
+    elif json['model'] == 'Q6-Full-svc':
+        Model_name = 'Q6svc_s.joblib'
+    elif json['model'] == 'Q6-Full-logistic-reg':
+        Model_name = 'Q6logR_s.joblib'
+    elif json['model'] == 'Q6-Full-rf':
+        Model_name = 'Q6rf_s.joblib'
 
+    Workspace = json['workspace']
+    Model_vers = json['version']
+    Model_loaded = False
+    # TODO: check to see if the model you are querying for is already downloaded
     # TODO: if yes, load that model and write to the log about the model change.  
     # eg: app.logger.info(<LOG STRING>)
     
+    global Model
+    if Path(f'./models/{Model_name}').exists():
+        logging.info(f'Model exists and loaded: {Model_name}')
+         
+        Model = joblib.load('./models/Q6ens_s.joblib')
+        Model_loaded = True
     # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
     # about the model change. If it fails, write to the log about the failure and keep the 
     # currently loaded model
+    else:
+        api = API()
+        try:
+            # Download a Registry Model: eg "Q6-Full-ens" registered model name
+            api.download_registry_model(Workspace, json['model'], Model_vers,
+                                output_path="./models", expand=True)
+
+            logging.info(f'Model downloaded and loaded: {Model_name}')
+
+            Model = joblib.load('./models/Q6ens_s.joblib')
+            Model_loaded =True
+        except Exception as e:
+            logging.info(f'Exception: {e}, Using default Model')
+
+
 
     # Tip: you can implement a "CometMLClient" similar to your App client to abstract all of this
     # logic and querying of the CometML servers away to keep it clean here
 
-    raise NotImplementedError("TODO: implement this endpoint")
 
-    response = None
+    response = json
+    if Model_loaded == True:
+        response['Model_downloaded'] = True
+    else:
+        response['Model_downloaded'] = False
 
     app.logger.info(response)
     return jsonify(response)  # response must be json serializable!
@@ -100,12 +165,20 @@ def predict():
     """
     # Get POST json data
     json = request.get_json()
-    app.logger.info(json)
+    #log the data received (takes a lot of space)
+    #app.logger.info(json)
 
-    # TODO:
-    raise NotImplementedError("TODO: implement this enpdoint")
-    
-    response = None
+    X = pd.DataFrame.from_dict(json)
 
-    app.logger.info(response)
+    global Model
+    y_pred = Model.predict(X)
+    #y_pred_prob = Model.predict_proba(X)
+    response = pd.DataFrame(y_pred).to_json()
+
+    #log the predictions (takes a lot of space)
+    #app.logger.info(response)
     return jsonify(response)  # response must be json serializable!
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)
+    #serve(app, host='0.0.0.0', port=8080)

@@ -23,6 +23,7 @@ import ift6758
 import comet_ml
 from comet_ml import API
 import pickle
+import numpy as np
 from waitress import serve
 
 
@@ -169,11 +170,17 @@ def predict():
     #app.logger.info(json)
 
     X = pd.DataFrame.from_dict(json)
+    #or pd.read_json()
 
     global Model
     y_pred = Model.predict(X)
     #y_pred_prob = Model.predict_proba(X)
     response = pd.DataFrame(y_pred).to_json()
+
+    logging.info(f'Number of predictions made: {y_pred.shape[0]}')
+    unique, counts = np.unique(y_pred, return_counts=True)
+    goal_percentage = counts[1]/y_pred.shape[0]
+    logging.info(f'Goal percentage: {goal_percentage}, Number of Goals: {counts[1]}')
 
     #log the predictions (takes a lot of space)
     #app.logger.info(response)

@@ -63,16 +63,17 @@ def before_first_request():
 @app.route("/logs", methods=["GET"])
 def logs():
     """Reads data from the log file and returns them as the response"""
-    with open(LOG_FILE, 'r') as f:
-        return render_template('content.html', text=f.read())
+    # with open(LOG_FILE, 'r') as f:
+    #     return render_template('content.html', text=f.read())
     
-    # def generate():
-    #     with open(LOG_FILE) as f:
-    #         while True:
-    #             yield f.read()
+    response = {}
+    with open(LOG_FILE) as f:
+        for line in f:
+            splitLine = line.split()
+            #log into dictionary based on time (key) - message (value)
+            response[f'{splitLine[0]} {splitLine[1]}']=" ".join(splitLine[2:])
 
-    # response = generate()
-    #return jsonify(response)  # response must be json serializable!
+    return jsonify(response)  # response must be json serializable!
 
 
 @app.route("/download_registry_model", methods=["POST"])
@@ -187,5 +188,5 @@ def predict():
     return jsonify(response)  # response must be json serializable!
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=8080)
     #serve(app, host='0.0.0.0', port=8080)

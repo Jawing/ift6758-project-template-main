@@ -173,7 +173,6 @@ def predict():
     X = pd.DataFrame.from_dict(json)
     #or pd.read_json()
 
-
     global Model
     y_pred = Model.predict(X)
     #y_pred_prob = Model.predict_proba(X)

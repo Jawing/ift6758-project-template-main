@@ -38,7 +38,7 @@ def ping_game(game_id, idx):
         return new_events, new_idx, new_other
 
 
-ping_game('2017021065', 10)
+# ping_game('2017021065', 10)
     
 
     

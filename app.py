@@ -23,6 +23,7 @@ import ift6758
 import comet_ml
 from comet_ml import API
 import pickle
+import numpy as np
 from waitress import serve
 
 
@@ -62,16 +63,17 @@ def before_first_request():
 @app.route("/logs", methods=["GET"])
 def logs():
     """Reads data from the log file and returns them as the response"""
-    with open(LOG_FILE, 'r') as f:
-        return render_template('content.html', text=f.read())
+    # with open(LOG_FILE, 'r') as f:
+    #     return render_template('content.html', text=f.read())
     
-    # def generate():
-    #     with open(LOG_FILE) as f:
-    #         while True:
-    #             yield f.read()
+    response = {}
+    with open(LOG_FILE) as f:
+        for line in f:
+            splitLine = line.split()
+            #log into dictionary based on time (key) - message (value)
+            response[f'{splitLine[0]} {splitLine[1]}']=" ".join(splitLine[2:])
 
-    # response = generate()
-    #return jsonify(response)  # response must be json serializable!
+    return jsonify(response)  # response must be json serializable!
 
 
 @app.route("/download_registry_model", methods=["POST"])
@@ -118,10 +120,10 @@ def download_registry_model():
     # eg: app.logger.info(<LOG STRING>)
     
     global Model
-    if Path(f'./models/{Model_name}').exists():
+    if Path(f'./models/{Model_name}').exists() and Model_name != 'Q6ens_s.joblib':
         logging.info(f'Model exists and loaded: {Model_name}')
          
-        Model = joblib.load('./models/Q6ens_s.joblib')
+        Model = joblib.load(f'./models/{Model_name}')
         Model_loaded = True
     # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
     # about the model change. If it fails, write to the log about the failure and keep the 
@@ -135,7 +137,7 @@ def download_registry_model():
 
             logging.info(f'Model downloaded and loaded: {Model_name}')
 
-            Model = joblib.load('./models/Q6ens_s.joblib')
+            Model = joblib.load(f'./models/{Model_name}')
             Model_loaded =True
         except Exception as e:
             logging.info(f'Exception: {e}, Using default Model')
@@ -169,16 +171,23 @@ def predict():
     #app.logger.info(json)
 
     X = pd.DataFrame.from_dict(json)
+    #or pd.read_json()
+
 
     global Model
     y_pred = Model.predict(X)
     #y_pred_prob = Model.predict_proba(X)
     response = pd.DataFrame(y_pred).to_json()
 
+    logging.info(f'Number of predictions made: {y_pred.shape[0]}')
+    unique, counts = np.unique(y_pred, return_counts=True)
+    goal_percentage = counts[1]/y_pred.shape[0]
+    logging.info(f'Goal percentage: {goal_percentage}, Number of Goals: {counts[1]}')
+
     #log the predictions (takes a lot of space)
     #app.logger.info(response)
     return jsonify(response)  # response must be json serializable!
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=8080)
     #serve(app, host='0.0.0.0', port=8080)

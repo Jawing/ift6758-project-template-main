@@ -12,6 +12,7 @@ experiment = Experiment(
 import os
 import numpy as np 
 import pandas as pd
+from joblib import dump, load
 
 #import plot tools
 import matplotlib.pyplot as plt
@@ -91,7 +92,7 @@ X_train_1, X_test_1, y_train_1, y_test_1 = train_test_split(X_new.astype('float'
 
 
 
-search_xgboost_tune = pickle.load(open('./models/Q52_XGboost_hyperparameter.pkl', 'rb'))
+search_xgboost_tune = dump(XGB_2, './models/Q52_XGboost_hyperparameter.joblib')
 
 y_pred = search_xgboost_tune.predict(X_test_1)
 
@@ -116,4 +117,4 @@ metrics = {"f1":f1,
 
 experiment.log_dataset_hash(X_train_1)
 experiment.log_metrics(metrics)
-experiment.log_model("Q5_XGBOOST", './models/Q52_XGboost_hyperparameter.pkl')
+experiment.log_model("Q52_XGBOOST", './models/Q52_XGboost_hyperparameter.pkl')

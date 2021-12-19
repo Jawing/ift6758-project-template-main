@@ -27,28 +27,54 @@ def ping_game(game_id, idx):
     #client = ServingClient()
     loadstats_pergame1 = loadstats_pergame(game_id)
     X = tidyData_adv(loadstats_pergame1)
-    #print(client.predict(X))
-    # print(X.shape)
-    # X['train']=1
-    # df_all = X
-    # df_nonull = pre_process(df_all)
-    # print(df_nonull.shape)
-    
+    print(list(X.columns))
+
+    print('tidy adva', X.shape)
+    X["rebound"] = X["rebound"].apply( lambda x : 1 if x else 0 )
+    X["isGoal"] = X["isGoal"].apply( lambda x : 1 if x else 0 )
+
+    X = X[["periodSeconds","event_idx", "period", "coordinates_x", "coordinates_y","dist_goal", "angle_goal", 
+                             "shotType", "eventType_last", "coordinates_x_last","coordinates_y_last", "distance_last",
+                             "periodSeconds_last","rebound","angle_change","speed", "isGoal"]]
+
+    data_xgboost_new = X.dropna()
+    print("Adter drop", data_xgboost_new.isna().shape)
+
+    X_xg = data_xgboost_new.iloc[:, :-1]
+
+    print(".iloc", X_xg.shape)
+
+    df = pd.get_dummies(X_xg[["shotType", "eventType_last"]])
+
+    print("After dummies", df.shape)
+
+    #Concat new and the previous dataframe
+    X_1 = pd.concat([data_xgboost_new,df], axis = 1)
+
+    print("X_1",X_1.shape)
+
+    #dropping the two columns 
+    X_new = X_1.drop(['shotType', 'eventType_last'], axis = 1)
+    print("After Dropping", X_new.shape)
+
+    X_new_ft = X_new[['dist_goal','coordinates_y', 'periodSeconds_last', 'periodSeconds', 'angle_goal',
+              'period', 'speed', 'shotType_Slap Shot', 'shotType_Backhand', 'distance_last', 'shotType_Wrist Shot' , "event_idx"]]
+
+    print("After new ft", X_new_ft.shape)
 
     
     
-    # if df_gameid['event_idx'].iloc[0] == idx:
-    #     other = df_gameid.iloc[0]
-    #     print("No new events")
-    #     return None, idx, other
-    # else:   
-    #     print("New events")
-    #     new_events = df_gameid.loc[df_gameid['event_idx'] > idx]
-    #     new_idx = new_events['event_idx'].iloc[0]
-    #     new_other = new_events.drop(['event_idx'], axis=1)
-    #     return new_events, new_idx, new_other
-
-    return X
+    if X_new['event_idx'].iloc[0] == idx:
+        other = X_new.iloc[0]
+        print("No new events")
+        return None, idx, other
+    else:   
+        print("New events")
+        new_events = X_new.loc[X_new['event_idx'] > idx]
+        new_idx = new_events['event_idx'].iloc[0]
+        new_other = new_events.drop(['event_idx'], axis=1)
+        return new_events, new_idx, new_other
+    #return df
 
 
 ping_game('2017021065', 10)

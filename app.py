@@ -107,6 +107,8 @@ def download_registry_model():
         Model_name = 'Q33_log_reg_distance_angle.joblib'
     elif json['model'] == 'Q5_XGBOOST':
         Model_name = 'Q51_XGboost_distance_angle.joblib'
+    elif json['model'] == 'Q53_XGBOOST':
+        Model_name = 'Q53_XGboost_feature_tuned.joblib'
 
     Workspace = json['workspace']
     Model_vers = json['version']

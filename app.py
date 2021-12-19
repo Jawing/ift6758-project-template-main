@@ -2,11 +2,8 @@
 If you are in the same directory as this file (app.py), you can run run the app using gunicorn:
     
     $ gunicorn --bind 0.0.0.0:<PORT> app:app
-
 gunicorn can be installed via:
-
     $ pip install gunicorn
-
 """
 import os
 from pathlib import Path
@@ -69,12 +66,7 @@ def logs():
     response = {}
     with open(LOG_FILE) as f:
         for line in f:
-            splitLine = line.split()
-            #log into dictionary based on time (key) - message (value)
-            st = ""
-            for s in splitLine[2:]:
-                st += s + " "
-            response[str(splitLine[0])+" "+str(splitLine[1])] = st
+            response[line] = line
 
     return jsonify(response)  # response must be json serializable!
 
@@ -83,11 +75,8 @@ def logs():
 def download_registry_model():
     """
     Handles POST requests made to http://IP_ADDRESS:PORT/download_registry_model
-
     The comet API key should be retrieved from the ${COMET_API_KEY} environment variable.
-
     Recommend (but not required) json with the schema:
-
         {
             workspace: (required),
             model: (required),
@@ -114,6 +103,10 @@ def download_registry_model():
         Model_name = 'Q6logR_s.joblib'
     elif json['model'] == 'Q6-Full-rf':
         Model_name = 'Q6rf_s.joblib'
+    elif json['model'] == 'Q3_LogReg_Angle':
+        Model_name = 'Q33_log_reg_distance_angle.joblib'
+    elif json['model'] == 'Q5_XGBOOST':
+        Model_name = 'Q51_XGboost_distance_angle.joblib'
 
     Workspace = json['workspace']
     Model_vers = json['version']
@@ -165,22 +158,25 @@ def download_registry_model():
 def predict():
     """
     Handles POST requests made to http://IP_ADDRESS:PORT/predict
-
     Returns predictions
     """
     # Get POST json data
     json = request.get_json()
     #log the data received (takes a lot of space)
     #app.logger.info(json)
-
+    #print(json)
     X = pd.DataFrame.from_dict(json)
+    print(X.head())
     #or pd.read_json()
 
-    global Model
+    #global Model
     y_pred = Model.predict(X)
+    print(y_pred)
     #y_pred_prob = Model.predict_proba(X)
     response = pd.DataFrame(y_pred).to_json()
+    print(response)
 
+    return response
     logging.info(f'Number of predictions made: {y_pred.shape[0]}')
     unique, counts = np.unique(y_pred, return_counts=True)
     goal_percentage = counts[1]/y_pred.shape[0]
@@ -188,7 +184,7 @@ def predict():
 
     #log the predictions (takes a lot of space)
     #app.logger.info(response)
-    return jsonify(response)  # response must be json serializable!
+      # response must be json serializable!
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)

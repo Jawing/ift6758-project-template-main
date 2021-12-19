@@ -15,30 +15,44 @@ import numpy as np
 import requests
 import json
 from ift6758.data.functions import loadstats_pergame
+from ift6758.data.tidyData import tidyData
 from ift6758.data.tidyData_adv import tidyData_adv
+from ift6758.data.functions import pre_process
+#from ift6758.client.serving_client import ServingClient
 
 def ping_game(game_id, idx):
     """
     Ping a game for new events.
     """
+    #client = ServingClient()
     loadstats_pergame1 = loadstats_pergame(game_id)
-    #loadstats_pergame1 = loadstats_pergame1.drop(['isGoal'], axis=1)
-    df_gameid = tidyData_adv(loadstats_pergame1)
-    #print(df_gameid)
+    X = tidyData_adv(loadstats_pergame1)
+    #print(client.predict(X))
+    # print(X.shape)
+    # X['train']=1
+    # df_all = X
+    # df_nonull = pre_process(df_all)
+    # print(df_nonull.shape)
     
-    if df_gameid['event_idx'].iloc[0] == idx:
-        other = df_gameid.iloc[0]
-        print("No new events")
-        return None, idx, other
-    else:   
-        print("New events")
-        new_events = df_gameid.loc[df_gameid['event_idx'] > idx]
-        new_idx = new_events['event_idx'].iloc[0]
-        new_other = new_events.drop(['event_idx'], axis=1)
-        return new_events, new_idx, new_other
+
+    
+    
+    # if df_gameid['event_idx'].iloc[0] == idx:
+    #     other = df_gameid.iloc[0]
+    #     print("No new events")
+    #     return None, idx, other
+    # else:   
+    #     print("New events")
+    #     new_events = df_gameid.loc[df_gameid['event_idx'] > idx]
+    #     new_idx = new_events['event_idx'].iloc[0]
+    #     new_other = new_events.drop(['event_idx'], axis=1)
+    #     return new_events, new_idx, new_other
+
+    return X
 
 
-# ping_game('2017021065', 10)
+ping_game('2017021065', 10)
+
     
 
     

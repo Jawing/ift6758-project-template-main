@@ -11,6 +11,7 @@ experiment = Experiment(
 import os
 import numpy as np 
 import pandas as pd
+from joblib import dump, load
 
 #import plot tools
 import matplotlib.pyplot as plt
@@ -55,7 +56,8 @@ X_train_ad, X_test_ad, y_train_ad, y_test_ad = train_test_split(X_angle_distance
 clf = LogisticRegression(random_state=0).fit(X_train_ad, y_train_ad)
 
 #32_log_reg_angle.pkl
-search_logreg = pickle.load(open('./models/Q33_log_reg_distance_angle.pkl', 'rb'))
+search_logreg = load('./models/Q33_log_reg_distance_angle.joblib')
+# search_logreg = pickle.load(open('./models/Q33_log_reg_distance_angle.joblib', 'rb'))
 
 y_pred = search_logreg.predict(X_test_ad)
 
@@ -80,4 +82,4 @@ metrics = {"f1":f1,
 
 experiment.log_dataset_hash(X_train_ad)
 experiment.log_metrics(metrics)
-experiment.log_model("Q3_LogReg_Angle", './models/Q33_log_reg_distance_angle.pkl')
+experiment.log_model("Q3_LogReg_Angle", './models/Q33_log_reg_distance_angle.joblib')

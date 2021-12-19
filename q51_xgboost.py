@@ -12,6 +12,7 @@ experiment = Experiment(
 import os
 import numpy as np 
 import pandas as pd
+from joblib import dump, load
 
 #import plot tools
 import matplotlib.pyplot as plt
@@ -64,7 +65,9 @@ X_train_ad_xg, X_test_ad_xg, y_train_ad_xg, y_test_ad_xg = train_test_split(X_an
 
 
 
-search_xgboost_tune = pickle.load(open('./models/Q51_XGboost_distance_angle.pkl', 'rb'))
+# search_xgboost_tune = pickle.load(open('./models/Q51_XGboost_distance_angle.joblib', 'rb'))
+
+search_xgboost_tune = load('./models/Q51_XGboost_distance_angle.joblib')
 
 y_pred = search_xgboost_tune.predict(X_test_ad_xg)
 
@@ -89,4 +92,4 @@ metrics = {"f1":f1,
 
 experiment.log_dataset_hash(X_train_ad_xg)
 experiment.log_metrics(metrics)
-# experiment.log_model("Q5_XGBOOST", './models/Q52_XGboost_hyperparameter.pkl')
+experiment.log_model("Q5_XGBOOST", './models/Q51_XGboost_distance_angle.joblib')

@@ -9,10 +9,10 @@ services:
 #      args:
 #        ARG: <ARG>
 #    image: ift6758/serving:<TAG>
-#    ports:
-#      - <SERVING_PORT>:<SERVING_PORT>
-#    environment:
-#      DOCKER_ENV_VAR = ${LOCAL_ENV_VAR}
+   ports:
+     - 8080:8080
+    # environment:
+    #   DOCKER_ENV_VAR = ${LOCAL_ENV_VAR}
 ###### Uncomment below when you're ready to add the final notebook container to your docker compose
 ##  jupyter:
 ##    build:

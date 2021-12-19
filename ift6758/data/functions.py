@@ -6,6 +6,66 @@ import numpy as np
 from ift6758.data.tidyData import tidyData
 from scipy.ndimage import gaussian_filter
 
+#function returning one game dataframe
+def loadstats_pergame(game_id: str) -> dict:
+
+    #main dataframe dictionary set for all games
+    data = {}
+    
+    #define gametype
+    #REGULAR_SEASON = "02"
+    gameNumber = 1
+    rstatus = 0
+    
+    #first game id
+#     gameIDfirst = str(game_id) + REGULAR_SEASON + format(gameNumber, '04d')
+    
+#     print(gameIDfirst)
+
+    #loop through regular season
+    #while the game can be found in the api and gameNumber less than or equal to 1271
+    #while gameNumber <= 1271 and rstatus<400:
+    #gameID = str(game_id) + REGULAR_SEASON + format(gameNumber, '04d')
+        # filename=f'{filepath}/{game_id}/{gameID}.json'
+        # #checks if dataset in targetyear exist at filepath
+        # if os.path.isfile(filename):
+        #     #if exist load all data for targetyear and return as pandas Dataframe
+        #     with open(filename) as f:
+        #         data[gameID] = json.load(f)
+        #         gameNumber += 1
+        #     f.close()
+        #     continue
+
+        #request server api
+    r = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{game_id}/feed/live/")
+    
+    #print(r)
+
+    #if no error at reponse, store in dataframe
+    if not (r.status_code >= 400):
+        #check for different status code other than 200
+        if r.status_code != 200:
+            print(f'Status code: {r.status_code} at gameID:{gameID}. Unexpected.')
+        #save and store in data folder
+        data[game_id] = r.json()
+        #os.makedirs(os.path.dirname(filename), exist_ok=True)
+#         with open(filename, 'w') as f:
+#             json.dump(data[gameID], f, ensure_ascii=False, indent=4)
+        #f.close()
+        gameNumber += 1
+        #continue
+    else:
+        #game not added if it does not exist
+        print(f'Error code: {r.status_code} at gameID:{gameID}. Game not found.')
+        rstatus = r.status_code
+        gameNumber += 1
+    #print(f'size of data in regular season: {len(data)}')
+
+    #store the index where the playoffgames begin in the metaData section of first game
+    #data[gameIDfirst]['metaData']['playoffIndex'] = len(data)
+    
+
+    return pd.DataFrame.from_dict(data)
 
 #function for data acquisition
 def loadstats(targetyear: int, filepath: str, playoffs=True, regular=True) -> pd.DataFrame:

@@ -45,7 +45,8 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
-
+ADD app.py .
+ADD requirements.txt .
 
 # TODO: install libs
 
@@ -64,6 +65,8 @@ RUN pip3 install -r requirements.txt
 #EDIT this part copy only nessesary functions and files 
 COPY . .
 
-CMD [ "python3", "app.py"]
+CMD ["gunicorn"  , "--bind", "0.0.0.0:8080", "app:app"]
+
+#CMD [ "python3", "app.py"]
 
 EXPOSE 8080

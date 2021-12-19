@@ -7,7 +7,11 @@ opencv-python
 tqdm
 lxml
 plotly
-ipywidgets
 ipykernel
-jupyterlab>=3.0.0
 setuptools
+flask
+gunicorn
+scikit-learn
+comet_ml
+jupyterlab
+ipywidgets

@@ -134,3 +134,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+.Q6ens_s.joblib
+.Q6ens_s.joblib.cache
+Q6ens_s.joblib
+.comet.config

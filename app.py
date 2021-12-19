@@ -24,7 +24,7 @@ import comet_ml
 from comet_ml import API
 import pickle
 import numpy as np
-from waitress import serve
+# from waitress import serve
 
 
 LOG_FILE = os.environ.get("FLASK_LOG", "flask.log")
@@ -71,7 +71,10 @@ def logs():
         for line in f:
             splitLine = line.split()
             #log into dictionary based on time (key) - message (value)
-            response[f'{splitLine[0]} {splitLine[1]}']=" ".join(splitLine[2:])
+            st = ""
+            for s in splitLine[2:]:
+                st += s + " "
+            response[str(splitLine[0])+" "+str(splitLine[1])] = st
 
     return jsonify(response)  # response must be json serializable!
 

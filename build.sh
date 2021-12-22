@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t flask -f Dockerfile.serving .
+docker build -t model-serving -f Dockerfile.serving .

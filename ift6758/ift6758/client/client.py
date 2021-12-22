@@ -29,7 +29,15 @@ def ping_game(game_id, idx):
     X = tidyData_adv(loadstats_pergame1)
     print(list(X.columns))
 
+    print(X['homeTeam'].unique())
+    print(X['awayTeam'].unique())
+
+    X_hometeam = X['homeTeam'].unique()
+    X_awayteam = X['awayTeam'].unique()
+
+
     print('tidy adva', X.shape)
+
     X["rebound"] = X["rebound"].apply( lambda x : 1 if x else 0 )
     X["isGoal"] = X["isGoal"].apply( lambda x : 1 if x else 0 )
 
@@ -37,8 +45,9 @@ def ping_game(game_id, idx):
                              "shotType", "eventType_last", "coordinates_x_last","coordinates_y_last", "distance_last",
                              "periodSeconds_last","rebound","angle_change","speed", "isGoal"]]
 
+
     data_xgboost_new = X.dropna()
-    print("Adter drop", data_xgboost_new.isna().shape)
+    print("After drop", data_xgboost_new.isna().shape)
 
     X_xg = data_xgboost_new.iloc[:, :-1]
 
@@ -57,13 +66,13 @@ def ping_game(game_id, idx):
     X_new = X_1.drop(['shotType', 'eventType_last'], axis = 1)
     print("After Dropping", X_new.shape)
 
-    X_new_ft = X_new[['dist_goal','coordinates_y', 'periodSeconds_last', 'periodSeconds', 'angle_goal',
-              'period', 'speed', 'shotType_Slap Shot', 'shotType_Backhand', 'distance_last', 'shotType_Wrist Shot' , "event_idx"]]
+    if len(X_new.columns) < 30:
+                for i in range(30-len(X_new.columns)):
+                        X_new['missing'+str(i)] = np.array([0 for j in range(X_new.shape[0])])
+    print('After adding missing columns, X_new', X_new.shape)
 
-    print("After new ft", X_new_ft.shape)
+    #return X_new, X_awayteam, X_hometeam
 
-    
-    
     if X_new['event_idx'].iloc[0] == idx:
         other = X_new.iloc[0]
         print("No new events")

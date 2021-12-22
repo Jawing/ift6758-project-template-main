@@ -66,7 +66,7 @@ data_xgboost = df
 #changing categorical 
 data_xgboost["rebound"] = data_xgboost["rebound"].apply( lambda x : 1 if x else 0 )
 #print(data_xgboost.isna().sum())
-data_xgboost = data_xgboost[["periodSeconds", "period", "coordinates_x", "coordinates_y","dist_goal", "angle_goal", 
+data_xgboost = data_xgboost[["periodSeconds","event_idx", "period", "coordinates_x", "coordinates_y","dist_goal", "angle_goal", 
                              "shotType", "eventType_last", "coordinates_x_last","coordinates_y_last", "distance_last",
                              "periodSeconds_last","rebound","angle_change","speed", "isGoal"]]
 
@@ -92,7 +92,7 @@ X_train_1, X_test_1, y_train_1, y_test_1 = train_test_split(X_new.astype('float'
 
 
 
-search_xgboost_tune = dump(XGB_2, './models/Q52_XGboost_hyperparameter.joblib')
+search_xgboost_tune = load('./models/Q52_XGboost_hyperparameter.joblib')
 
 y_pred = search_xgboost_tune.predict(X_test_1)
 
@@ -117,4 +117,4 @@ metrics = {"f1":f1,
 
 experiment.log_dataset_hash(X_train_1)
 experiment.log_metrics(metrics)
-experiment.log_model("Q52_XGBOOST", './models/Q52_XGboost_hyperparameter.pkl')
+experiment.log_model("Q52_XGBOOST", './models/Q52_XGboost_hyperparameter.joblib')

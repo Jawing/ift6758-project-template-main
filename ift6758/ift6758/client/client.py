@@ -71,8 +71,6 @@ def ping_game(game_id, idx):
                         X_new['missing'+str(i)] = np.array([0 for j in range(X_new.shape[0])])
     print('After adding missing columns, X_new', X_new.shape)
 
-    #return X_new, X_awayteam, X_hometeam
-
     if X_new['event_idx'].iloc[0] == idx:
         other = X_new.iloc[0]
         print("No new events")

@@ -42,10 +42,8 @@ WORKDIR /code
 #
 #       CMD <SHELL COMMAND>
 
-
-
-# TODO: add code, optionally a default model if you want 
-
+ADD dashboard.ipynb .
+ADD requirements.txt .
 
 # TODO: install libs
 
@@ -55,3 +53,19 @@ WORKDIR /code
 
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
+
+
+#eg.
+COPY requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
+
+#EDIT this part copy only nessesary functions and files 
+COPY . .
+
+ENTRYPOINT [ "jupyter-lab" ]
+
+CMD [ "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]
+
+#CMD [ "python3", "app.py"]
+
+# EXPOSE 8888

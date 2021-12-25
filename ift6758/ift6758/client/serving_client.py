@@ -39,8 +39,8 @@ class ServingClient:
         	f"{self.base_url}/predict", 
         	json = X.to_dict()
         )
-        print(r)
-        print(r.json())
+        # print(r)
+        # print(r.json())
         return pd.DataFrame(r.json())
 
     def logs(self) -> dict:

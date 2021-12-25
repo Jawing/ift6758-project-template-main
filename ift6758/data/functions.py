@@ -45,7 +45,7 @@ def loadstats_pergame(game_id: str) -> dict:
     if not (r.status_code >= 400):
         #check for different status code other than 200
         if r.status_code != 200:
-            print(f'Status code: {r.status_code} at gameID:{gameID}. Unexpected.')
+            print(f'Status code: {r.status_code} at gameID:{game_id}. Unexpected.')
         #save and store in data folder
         data[game_id] = r.json()
         #os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -56,7 +56,7 @@ def loadstats_pergame(game_id: str) -> dict:
         #continue
     else:
         #game not added if it does not exist
-        print(f'Error code: {r.status_code} at gameID:{gameID}. Game not found.')
+        print(f'Error code: {r.status_code} at gameID:{game_id}. Game not found.')
         rstatus = r.status_code
         gameNumber += 1
     #print(f'size of data in regular season: {len(data)}')

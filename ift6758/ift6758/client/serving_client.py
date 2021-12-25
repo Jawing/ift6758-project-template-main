@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class ServingClient:
     def __init__(self, ip: str = "0.0.0.0", port: int = 8080, features=None):
         self.base_url = f"http://{ip}:{port}"
-        logger.info(f"Initializing client; base URL: {self.base_url}")
+        logger.info(f"Initializing serving client; base URL: {self.base_url}")
 
         if features is None:
             features = ["distance"]

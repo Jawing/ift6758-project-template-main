@@ -105,12 +105,14 @@ def download_registry_model():
         Model_name = 'Q6rf_s.joblib'
     elif json['model'] == 'Q3_LogReg_Angle':
         Model_name = 'Q33_log_reg_distance_angle.joblib'
-    elif json['model'] == 'Q5_XGBOOST':
+    elif json['model'] == 'q51-xgboost':
         Model_name = 'Q51_XGboost_distance_angle.joblib'
-    elif json['model'] == 'Q52_XGBOOST':
+    elif json['model'] == 'q5-xgboost-tuned':
         Model_name = 'Q52_XGboost_hyperparameter.joblib'
-    elif json['model'] == 'Q53_XGBOOST':
-        Model_name = 'Q5_XGboost_hyperparameter.joblib'
+    # elif json['model'] == 'q5-xgboost-feature-selection':
+    #     Model_name = 'Q5_XGboost_hyperparameter.joblib'
+    elif json['model'] == 'q51-xgboost-feature-selection':
+        Model_name = 'Q52_XGboost_hyperparameter.joblib'
 
     Workspace = json['workspace']
     Model_vers = json['version']
@@ -174,7 +176,7 @@ def predict():
     #or pd.read_json()
 
     #global Model
-    y_pred = Model.predict(X)
+    y_pred = Model.predict_proba(X)[:,1]
     print(y_pred)
     #y_pred_prob = Model.predict_proba(X)
     response = pd.DataFrame(y_pred).to_json()

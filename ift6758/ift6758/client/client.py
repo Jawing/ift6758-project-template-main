@@ -10,83 +10,119 @@
 # you will be able to ignore the events that you’ve already processed. You will likely need to use the last event somewhere in order to correctly compute features for the subsequent event (as the advanced features involve including the previous event information).
 
 # ping_game(game_id, idx, other) -> new_events, new_idx, new_other
+from datetime import time
 import pandas as pd
 import numpy as np
 import requests
 import json
 from ift6758.data.functions import loadstats_pergame
-from ift6758.data.tidyData import tidyData
-from ift6758.data.tidyData_adv import tidyData_adv
+from ift6758.data.tidyData_single import tidyData_single
 from ift6758.data.functions import pre_process
-#from ift6758.client.serving_client import ServingClient
+import logging
+from ift6758.ift6758.client.serving_client import ServingClient
 
-def ping_game(game_id, idx):
-    """
-    Ping a game for new events.
-    """
-    #client = ServingClient()
-    loadstats_pergame1 = loadstats_pergame(game_id)
-    X = tidyData_adv(loadstats_pergame1)
-    print(list(X.columns))
+logger = logging.getLogger(__name__)
+s = ServingClient()
 
-    print(X['homeTeam'].unique())
-    print(X['awayTeam'].unique())
+class GameClient:
+    def __init__(self, game_id = 2021020329, G_home = 0,G_away = 0, last_Idx = -1):
+        #store the games processed and their last_Idx,xg,teamnames
+        self.game_dic = {game_id:(G_home, G_away, last_Idx)}
+        # any other potential initialization
 
-    X_hometeam = X['homeTeam'].unique()
-    X_awayteam = X['awayTeam'].unique()
+    def ping_game(self, game_id):
+        """
+        Ping a game for new events.
+        """
+        
+        last_Idx = -1
+        G_homeP = 0
+        G_awayP = 0
+        #retrieve new events if already retrieved
+        if game_id in self.game_dic:
+            G_homeP, G_awayP, last_Idx = self.game_dic[game_id]
 
 
-    print('tidy adva', X.shape)
+        logger.info(f"Retrieving lastest game; {game_id}")
 
+        loadstats_pergame1 = loadstats_pergame(game_id)
+        #print(len(loadstats_pergame1.iloc[:, 0]["liveData"]["plays"]["allPlays"][0:335]))
+        X,last_Idx = tidyData_single(loadstats_pergame1,last_Idx)
+        #no new events
+        if X.empty == True:
+            return X
+
+
+        # print(list(X.columns))
+        #print(X['homeTeam'].unique())
+        #print(X['awayTeam'].unique())
+        
+        X_hometeam = X['homeTeam'].unique()
+        X_awayteam = X['awayTeam'].unique()
+        period_num = X['period']
+        period_time = X['periodTime']
+
+        X_homedf = X[X['teamInfo']==X_hometeam[0]]
+        X_awaydf = X[X['teamInfo']==X_awayteam[0]]
+
+
+        #preprocessing XGBoost
+        X_homedf = preprocess_XGB(X_homedf)
+        X_awaydf = preprocess_XGB(X_awaydf)
+
+
+        #expected goal predict sum with previous goal predicts
+        pred_home = s.predict(X_homedf)
+        pred_away = s.predict(X_awaydf)
+
+        print(pred_home)
+        print(G_homeP)
+        G_home = np.sum(pred_home.values)+G_homeP
+        G_away = np.sum(pred_away.values)+G_awayP
+
+        #store the information so far, xg, last index to game_ID
+        self.game_dic[game_id] = G_home,G_away,last_Idx
+
+        #calculate expected goal
+        xG_home = G_home/(last_Idx+1)
+        xG_away = G_away/(last_Idx+1)
+
+        #print(s.predict(X))
+        # pred_away.reset_index(inplace=True)
+        # pred_home.reset_index(inplace=True)
+        # X["xG"] = pd.concat([pred_home, pred_away], sort=False).sort_index()
+        # print(pd.concat([pred_home, pred_away], sort=False).sort_index())
+
+        return X, X_hometeam,X_awayteam,period_num,period_time,xG_home,xG_away
+
+# from ift6758.ift6758.client.client import GameClient
+
+# g = GameClient()
+# g.ping_game(2021020329)
+
+#preprocessing XGBoost
+def preprocess_XGB(X):
+    #print('tidy adva', X.shape)
     X["rebound"] = X["rebound"].apply( lambda x : 1 if x else 0 )
     X["isGoal"] = X["isGoal"].apply( lambda x : 1 if x else 0 )
-
     X = X[["periodSeconds","event_idx", "period", "coordinates_x", "coordinates_y","dist_goal", "angle_goal", 
                              "shotType", "eventType_last", "coordinates_x_last","coordinates_y_last", "distance_last",
                              "periodSeconds_last","rebound","angle_change","speed", "isGoal"]]
-
-
     data_xgboost_new = X.dropna()
-    print("After drop", data_xgboost_new.isna().shape)
-
+    #print("After drop", data_xgboost_new.isna().shape)
     X_xg = data_xgboost_new.iloc[:, :-1]
-
-    print(".iloc", X_xg.shape)
-
+    #print(".iloc", X_xg.shape)
     df = pd.get_dummies(X_xg[["shotType", "eventType_last"]])
-
-    print("After dummies", df.shape)
-
+    #print("After dummies", df.shape)
     #Concat new and the previous dataframe
     X_1 = pd.concat([data_xgboost_new,df], axis = 1)
-
-    print("X_1",X_1.shape)
-
+    #print("X_1",X_1.shape)
     #dropping the two columns 
     X_new = X_1.drop(['shotType', 'eventType_last'], axis = 1)
-    print("After Dropping", X_new.shape)
-
+    #print("After Dropping", X_new.shape)
     if len(X_new.columns) < 30:
                 for i in range(30-len(X_new.columns)):
                         X_new['missing'+str(i)] = np.array([0 for j in range(X_new.shape[0])])
-    print('After adding missing columns, X_new', X_new.shape)
+    #print('After adding missing columns, X_new', X_new.shape)
 
-    if X_new['event_idx'].iloc[0] == idx:
-        other = X_new.iloc[0]
-        print("No new events")
-        return None, idx, other
-    else:   
-        print("New events")
-        new_events = X_new.loc[X_new['event_idx'] > idx]
-        new_idx = new_events['event_idx'].iloc[0]
-        new_other = new_events.drop(['event_idx'], axis=1)
-        return new_events, new_idx, new_other
-    #return df
-
-
-ping_game('2017021065', 10)
-
-    
-
-    
-    
+    return X_new

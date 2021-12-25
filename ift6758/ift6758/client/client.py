@@ -74,8 +74,11 @@ class GameClient:
         #expected goal predict sum with previous goal predicts
         pred_home = s.predict(X_homedf)
         pred_away = s.predict(X_awaydf)
-        G_home = sum(pred_home.values())+G_homeP
-        G_away = sum(pred_away.values())+G_awayP
+
+        print(pred_home)
+        print(G_homeP)
+        G_home = np.sum(pred_home.values)+G_homeP
+        G_away = np.sum(pred_away.values)+G_awayP
 
         #store the information so far, xg, last index to game_ID
         self.game_dic[game_id] = G_home,G_away,last_Idx
@@ -84,8 +87,11 @@ class GameClient:
         xG_home = G_home/(last_Idx+1)
         xG_away = G_away/(last_Idx+1)
 
-
-        X["xG"] = pd.Series(s.predict(X))
+        #print(s.predict(X))
+        # pred_away.reset_index(inplace=True)
+        # pred_home.reset_index(inplace=True)
+        # X["xG"] = pd.concat([pred_home, pred_away], sort=False).sort_index()
+        # print(pd.concat([pred_home, pred_away], sort=False).sort_index())
 
         return X, X_hometeam,X_awayteam,period_num,period_time,xG_home,xG_away
 

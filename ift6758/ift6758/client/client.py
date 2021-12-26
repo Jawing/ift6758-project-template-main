@@ -103,8 +103,10 @@ class GameClient:
 #preprocessing XGBoost
 def preprocess_XGB(X):
     #print('tidy adva', X.shape)
-    X["rebound"] = X["rebound"].apply( lambda x : 1 if x else 0 )
-    X["isGoal"] = X["isGoal"].apply( lambda x : 1 if x else 0 )
+    #X["rebound"] = X["rebound"].apply( lambda x : 1 if x else 0 )
+    X.loc[:, ["rebound"]] = X["rebound"].apply( lambda x : 1 if x else 0 ).to_numpy().reshape(-1, 1)
+    #X["isGoal"] = X["isGoal"].apply( lambda x : 1 if x else 0 )
+    X.loc[:, ["isGoal"]] = X["isGoal"].apply( lambda x : 1 if x else 0 ).to_numpy().reshape(-1, 1)
     X = X[["periodSeconds","event_idx", "period", "coordinates_x", "coordinates_y","dist_goal", "angle_goal", 
                              "shotType", "eventType_last", "coordinates_x_last","coordinates_y_last", "distance_last",
                              "periodSeconds_last","rebound","angle_change","speed", "isGoal"]]

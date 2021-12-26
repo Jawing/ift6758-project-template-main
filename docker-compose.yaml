@@ -23,7 +23,7 @@ services:
       #    ARG: <ARG>
     image: ift6758/jupyter:model-serving_1
     ports:
-      - 8081:8888
+      - 8888:8888
     environment:
       - COMET_API_KEY=${COMET_API_KEY}
       
